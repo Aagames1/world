@@ -1,123 +1,247 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>World</title>
-  <style>
-    body {
-      background: black;
-      color: #00ffcc;
-      font-family: monospace;
-      padding: 20px;
-      white-space: pre-wrap;
-    }
-  </style>
+<meta charset="UTF-8" />
+<title>Puzzle World</title>
+<style>
+  body {
+    background: black;
+    color: #00ffcc;
+    font-family: monospace;
+    padding: 20px;
+    white-space: pre-wrap;
+  }
+</style>
 </head>
 <body>
+
 <pre id="game"></pre>
 
 <script>
-const paths = {
-  "/": `
-LOCATION: /
+/*
+  LOCATIONS
+  Keys exactly match your React paths
+*/
+const locations = {
+  "/start": `
+PUZZLE WORLD
 
-You are at the beginning.
+Welcome, traveler.
 
-AVAILABLE PATHS:
-- /home
+Modify the URL path to navigate.
+Start by going to:
+
+/home
   `,
 
   "/home": `
-LOCATION: /home
+YOUR HOME
 
-A quiet house. The lights flicker.
+You wake up alone in your house.
+The silence is unsettling.
 
-AVAILABLE PATHS:
-- /home/room
-- /home/cave
+Try:
+/home/outside
   `,
 
-  "/home/room": `
-LOCATION: /home/room
+  "/home/outside": `
+OUTSIDE YOUR HOME
 
-Your room is untouched.
-Something feels off.
+The world is eerily quiet.
 
-AVAILABLE PATHS:
-- /home
+Paths:
+- /home/outside/farm
+- /home/outside/cave
   `,
 
-  "/home/cave": `
-LOCATION: /home/cave
+  "/home/outside/farm": `
+THE FARM
 
-A hidden entrance beneath the house.
+Crops sway in the wind.
 
-AVAILABLE PATHS:
-- /home
-- /home/cave/tunnel
+Paths:
+- /home/outside/farm/hut
+- /home/outside/farm/field
   `,
 
-  "/home/cave/tunnel": `
-LOCATION: /home/cave/tunnel
+  "/home/outside/farm/hut": `
+INSIDE THE HUT
 
-The tunnel descends deeper.
-Scratches line the walls.
+Dust floats through beams of light.
 
-AVAILABLE PATHS:
-- /home/cave
-- /home/cave/chamber
+Path:
+/home/outside/farm/hut/vault
   `,
 
-  "/home/cave/chamber": `
-LOCATION: /home/cave/chamber
+  "/home/outside/farm/hut/vault": `
+THE VAULT
 
-A sealed stone chamber.
-A terminal hums quietly.
+A digital lock awaits a 5-letter code.
 
-AVAILABLE PATHS:
-- /home/cave/tunnel
+Hint: Explore the field.
   `,
 
-  "/forbidden": `
-LOCATION: /forbidden
+  "/home/outside/farm/field": `
+THE FIELD
 
-ACCESS LOGGED.
-THIS PATH SHOULD NOT EXIST.
+An abandoned tractor sits nearby.
+
+Path:
+/home/outside/farm/field/tractor
+  `,
+
+  "/home/outside/farm/field/tractor": `
+THE TRACTOR
+
+A note reads:
+
+"What did the crop say?
+Stop being CORNY!"
+  `,
+
+  "/home/outside/farm/hut/vault/CORNY": `
+VAULT UNLOCKED
+
+You obtained a FLASHLIGHT.
+
+Proceed to:
+/home/outside/cave
+  `,
+
+  "/home/outside/cave": `
+CAVE ENTRANCE
+
+It's pitch black inside.
+
+You might need light.
+  `,
+
+  "/home/outside/cave/flashlight": `
+CAVE (ILLUMINATED)
+
+Your flashlight reveals stone walls.
+
+Path:
+/home/outside/cave/flashlight/path
+  `,
+
+  "/home/outside/cave/flashlight/path": `
+THE NARROW PATH
+
+A massive rock blocks the way.
+
+Something about INSPECTING it...
+  `,
+
+  "/home/outside/cave/flashlight/path/beyond": `
+BEYOND THE ROCK
+
+A hidden facility appears ahead.
+
+Path:
+/home/outside/cave/flashlight/path/beyond/terminal
+  `,
+
+  "/home/outside/cave/flashlight/path/beyond/terminal": `
+SECURITY TERMINAL
+
+Username required.
+(admin?)
+  `,
+
+  "/home/outside/cave/flashlight/path/beyond/terminal/lobby": `
+TERMINAL LOBBY
+
+You bypassed security.
+
+A computer hums quietly.
+  `,
+
+  "/home/outside/cave/flashlight/path/beyond/terminal/mainframe": `
+MAINFRAME ACCESS
+
+Password required.
+(Hint: HTML comments)
+  `,
+
+  "/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42": `
+MAINFRAME UNLOCKED
+
+System access granted.
+
+Paths:
+- /files
+- /settings
   `
 };
 
+/* ---------- ROUTER ---------- */
+
 function getPath() {
-  return location.hash.replace("#", "") || "/";
+  return location.hash.replace("#", "") || "/start";
+}
+
+// Longest-prefix match (React-style)
+function resolveLocation(path) {
+  const parts = path.split("/").filter(Boolean);
+
+  for (let i = parts.length; i >= 0; i--) {
+    const candidate = "/" + parts.slice(0, i).join("/");
+    if (locations[candidate]) {
+      return {
+        resolved: candidate,
+        exact: candidate === path
+      };
+    }
+  }
+  return null;
 }
 
 function render() {
   const path = getPath();
   const game = document.getElementById("game");
 
-  if (paths[path]) {
-    game.textContent = paths[path];
-  } else {
-    game.textContent = `
-ERROR 404
+  const match = resolveLocation(path);
 
-PATH NOT FOUND:
+  if (!match) {
+    game.textContent = `
+404 — PATH NOT FOUND
+
+Entered:
 ${path}
 
-HINT:
-Paths are case-sensitive.
-Some paths are not listed.
+No valid parent route exists.
     `;
+    return;
   }
+
+  game.textContent = `
+CURRENT PATH:
+${path}
+
+--------------------------------
+
+${locations[match.resolved]}
+
+${match.exact ? "" : `
+NOTE:
+This path does not exist exactly.
+Loaded nearest valid location:
+
+${match.resolved}
+`}
+`;
 }
 
 window.addEventListener("hashchange", render);
 
-// force hash routing
+// Initialize
 if (!location.hash) {
-  location.hash = "/";
+  location.hash = "/start";
 }
 
 render();
 </script>
+
 </body>
 </html>
