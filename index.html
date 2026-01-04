@@ -15,6 +15,9 @@
       text-decoration: underline;
       cursor: pointer;
     }
+    a:hover {
+      color: #ffffff;
+    }
   </style>
 </head>
 <body>
@@ -22,41 +25,87 @@
 
   <script>
     const paths = {
-      "/": {
-        text: "You are at the beginning.\n\nPaths:\n- /home",
-      },
-      "/home": {
-        text: "You are at home.\n\nPaths:\n- /home/outside\n- /home/room",
-      },
-      "/home/room": {
-        text: "Your room is quiet.\n\nPaths:\n- /home",
-      },
-      "/home/outside": {
-        text: "You are outside.\n\nPaths:\n- /home\n- /home/outside/forest",
-      },
-      "/home/outside/forest": {
-        text: "The forest is dark.\n\nPaths:\n- /home/outside",
-      }
+      "/": `
+You are at the beginning.
+
+Paths:
+- <a href="/home">/home</a>
+      `,
+
+      "/home": `
+You are home.
+
+Paths:
+- <a href="/home/room">/home/room</a>
+- <a href="/home/outside">/home/outside</a>
+      `,
+
+      "/home/room": `
+Your room is quiet.
+There is something strange about the walls.
+
+Paths:
+- <a href="/home">/home</a>
+      `,
+
+      "/home/outside": `
+You step outside.
+The air feels wrong.
+
+Paths:
+- <a href="/home">/home</a>
+- <a href="/home/outside/forest">/home/outside/forest</a>
+      `,
+
+      "/home/outside/forest": `
+The forest is dark.
+You feel like you're not supposed to be here.
+
+Paths:
+- <a href="/home/outside">/home/outside</a>
+      `,
+
+      "/secret": `
+You were not meant to find this.
+
+No paths are listed.
+      `
     };
 
-    function render() {
-      let path = window.location.pathname.replace("/world", "") || "/";
-      if (!paths[path]) {
-        history.replaceState(null, "", "/world/");
-        path = "/";
-      }
-      document.getElementById("game").textContent = paths[path].text;
+    function getPath() {
+      return location.hash.replace("#", "") || "/";
     }
 
-    window.addEventListener("popstate", render);
+    function render() {
+      const path = getPath();
+      const game = document.getElementById("game");
+
+      if (paths[path]) {
+        game.innerHTML = paths[path];
+      } else {
+        game.innerHTML = `
+404: PATH NOT FOUND
+
+The system rejected:
+${path}
+
+Try something else.
+        `;
+      }
+    }
+
+    window.addEventListener("hashchange", render);
 
     document.addEventListener("click", e => {
       if (e.target.tagName === "A") {
         e.preventDefault();
-        history.pushState(null, "", "/world" + e.target.getAttribute("href"));
-        render();
+        location.hash = e.target.getAttribute("href");
       }
     });
+
+    if (!location.hash) {
+      location.hash = "/";
+    }
 
     render();
   </script>
