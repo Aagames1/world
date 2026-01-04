@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Puzzle World</title>
+
+<!-- React CDN -->
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+  body { margin: 0; }
+  .choice:hover { text-decoration: underline; cursor: pointer; }
+</style>
+</head>
+<body class="bg-black text-green-400 font-mono">
+
+<div id="root"></div>
+
+<script>
+const { useState, useEffect } = React;
+
+function PuzzleWorld() {
+  const [currentPath, setCurrentPath] = useState('/home');
+  const [inventory, setInventory] = useState([]);
+  const [sqlBypassUsed, setSqlBypassUsed] = useState(false);
+  const [adminAccess, setAdminAccess] = useState(false);
+  const [cookieValue, setCookieValue] = useState('visitor');
+  const [passwordFound, setPasswordFound] = useState(false);
+
+  const locations = {
+    '/home': {
+      title: 'YOUR HOME',
+      content: `You wake up in your home, eerily quiet.\nAvailable paths: /home/outside, /home/bedroom, /home/kitchen`,
+      options: ['/home/outside', '/home/bedroom', '/home/kitchen']
+    },
+    '/home/outside': {
+      title: 'OUTSIDE YOUR HOME',
+      content: `You step outside. To your left: a farm. To your right: a dark cave.\nAvailable paths: /home/outside/cave, /home/outside/farm, /home`,
+      options: ['/home/outside/cave', '/home/outside/farm', '/home']
+    },
+    '/home/bedroom': {
+      title: 'YOUR BEDROOM',
+      content: `Everything looks normal yet feels wrong.\nAvailable paths: /home`,
+      options: ['/home']
+    },
+    '/home/kitchen': {
+      title: 'YOUR KITCHEN',
+      content: `The kitchen is spotless.\nAvailable paths: /home`,
+      options: ['/home']
+    },
+    '/home/outside/farm': {
+      title: 'THE FARM',
+      content: `A small hut stands nearby. The field stretches beyond.\nAvailable paths: /home/outside/farm/hut, /home/outside/farm/field, /home/outside`,
+      options: ['/home/outside/farm/hut', '/home/outside/farm/field', '/home/outside']
+    },
+    '/home/outside/farm/hut': {
+      title: 'INSIDE THE HUT',
+      content: `A vault is built into the wall.\nAvailable paths: /home/outside/farm/hut/vault, /home/outside/farm`,
+      options: ['/home/outside/farm/hut/vault', '/home/outside/farm']
+    },
+    '/home/outside/farm/hut/vault': {
+      title: 'THE VAULT',
+      content: `You find a FLASHLIGHT inside. Inventory updated.\nAvailable paths: /home/outside/farm/hut`,
+      options: ['/home/outside/farm/hut'],
+      givesItem: 'flashlight'
+    },
+    '/home/outside/farm/field': {
+      title: 'THE FIELD',
+      content: `The crops sway gently. An old tractor sits nearby.\nAvailable paths: /home/outside/farm`,
+      options: ['/home/outside/farm']
+    },
+    '/home/outside/cave': {
+      title: 'CAVE ENTRANCE',
+      content: `It's very dark inside.${inventory.includes('flashlight') ? ' You can see with your flashlight.' : ''}\nAvailable paths: ${inventory.includes('flashlight') ? '/home/outside/cave/flashlight, /home/outside' : '/home/outside'}`,
+      options: inventory.includes('flashlight') ? ['/home/outside/cave/flashlight', '/home/outside'] : ['/home/outside']
+    },
+    '/home/outside/cave/flashlight': {
+      title: 'CAVE WITH LIGHT',
+      content: `You turn on your flashlight and see ancient walls. There are paths ahead.\nAvailable paths: /home/outside/cave/flashlight/tunnel, /home/outside/cave/flashlight/path, /home/outside/cave`,
+      options: ['/home/outside/cave/flashlight/tunnel', '/home/outside/cave/flashlight/path', '/home/outside/cave']
+    },
+    '/home/outside/cave/flashlight/path': {
+      title: 'THE NARROW PATH',
+      content: `A massive boulder blocks the path. A word is scratched: INSPECT\nAvailable paths: /home/outside/cave/flashlight/path/beyond, /home/outside/cave/flashlight`,
+      options: ['/home/outside/cave/flashlight/path/beyond', '/home/outside/cave/flashlight']
+    },
+    '/home/outside/cave/flashlight/path/beyond': {
+      title: 'BEYOND THE ROCK',
+      content: `You emerge into a clearing. A facility with a terminal lies ahead.\nAvailable paths: /home/outside/cave/flashlight/path/beyond/terminal, /home/outside/cave/flashlight/path`,
+      options: ['/home/outside/cave/flashlight/path/beyond/terminal', '/home/outside/cave/flashlight/path']
+    },
+    '/home/outside/cave/flashlight/path/beyond/terminal': {
+      title: 'SECURITY TERMINAL',
+      content: `A locked terminal awaits.\nAvailable paths: /home/outside/cave/flashlight/path/beyond/terminal/lobby, /home/outside/cave/flashlight/path/beyond`,
+      options: ['/home/outside/cave/flashlight/path/beyond/terminal/lobby', '/home/outside/cave/flashlight/path/beyond']
+    },
+    '/home/outside/cave/flashlight/path/beyond/terminal/lobby': {
+      title: 'TERMINAL LOBBY',
+      content: `Inside the lobby. The receptionist computer shows a password in HTML comment: ECHO42\nAvailable paths: /home/outside/cave/flashlight/path/beyond/terminal/mainframe`,
+      options: ['/home/outside/cave/flashlight/path/beyond/terminal/mainframe']
+    },
+    '/home/outside/cave/flashlight/path/beyond/terminal/mainframe': {
+      title: 'MAINFRAME ACCESS',
+      content: `Enter password: ECHO42 to continue.\nAvailable paths: /home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42`,
+      options: ['/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42'],
+      requiresPassword: true
+    },
+    '/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42': {
+      title: 'MAINFRAME - ACCESS GRANTED',
+      content: `You now have access to the system.\nAvailable paths: /restart`,
+      options: ['/restart'],
+      victory: true
+    },
+    '/restart': {
+      restart: true
+    }
+  };
+
+  // Give item
+  useEffect(() => {
+    const loc = locations[currentPath];
+    if (loc?.givesItem && !inventory.includes(loc.givesItem)) {
+      setInventory([...inventory, loc.givesItem]);
+    }
+    if (loc?.restart) {
+      setCurrentPath('/home');
+      setInventory([]);
+      setSqlBypassUsed(false);
+      setAdminAccess(false);
+      setCookieValue('visitor');
+      setPasswordFound(false);
+    }
+  }, [currentPath]);
+
+  const handlePasswordSubmit = (password) => {
+    if (password.toUpperCase() === 'ECHO42') {
+      setPasswordFound(true);
+      setCurrentPath('/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42');
+    } else {
+      alert('INCORRECT PASSWORD.');
+    }
+  };
+
+  const currentLocation = locations[currentPath] || {
+    title: '404 - PATH NOT FOUND',
+    content: `This path "${currentPath}" does not exist.`,
+    options: []
+  };
+
+  return React.createElement(
+    'div',
+    { className: 'max-w-4xl mx-auto p-8' },
+    React.createElement('div', { className: 'border-2 border-green-400 p-8' },
+      React.createElement('div', { className: 'text-xl mb-4 text-cyan-400' }, '> ' + currentLocation.title),
+      React.createElement('pre', { className: 'whitespace-pre-wrap mb-4' }, currentLocation.content),
+      currentLocation.requiresPassword &&
+        React.createElement('div', { className: 'mt-4' },
+          React.createElement('input', {
+            type: 'text',
+            className: 'bg-black text-green-400 border border-green-400 px-3 py-1 focus:outline-none',
+            placeholder: 'Enter password',
+            onKeyPress: e => { if (e.key === 'Enter') handlePasswordSubmit(e.target.value); }
+          })
+        ),
+      currentLocation.options.map(pathOption =>
+        React.createElement('div', {
+          key: pathOption,
+          className: 'choice text-green-300 mt-2',
+          onClick: () => setCurrentPath(pathOption)
+        }, pathOption)
+      ),
+      inventory.length > 0 &&
+        React.createElement('div', { className: 'mt-4 text-xs text-green-500' },
+          'Inventory: ' + inventory.join(', ')
+        )
+    )
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root'))
+  .render(React.createElement(PuzzleWorld));
+</script>
+
+</body>
+</html>
