@@ -9,105 +9,115 @@
       color: #00ffcc;
       font-family: monospace;
       padding: 20px;
-    }
-    a {
-      color: #00ffcc;
-      text-decoration: underline;
-      cursor: pointer;
-    }
-    a:hover {
-      color: #ffffff;
+      white-space: pre-wrap;
     }
   </style>
 </head>
 <body>
-  <pre id="game"></pre>
+<pre id="game"></pre>
 
-  <script>
-    const paths = {
-      "/": `
+<script>
+const paths = {
+  "/": `
+LOCATION: /
+
 You are at the beginning.
 
-Paths:
-- <a href="/home">/home</a>
-      `,
+AVAILABLE PATHS:
+- /home
+  `,
 
-      "/home": `
-You are home.
+  "/home": `
+LOCATION: /home
 
-Paths:
-- <a href="/home/room">/home/room</a>
-- <a href="/home/outside">/home/outside</a>
-      `,
+A quiet house. The lights flicker.
 
-      "/home/room": `
-Your room is quiet.
-There is something strange about the walls.
+AVAILABLE PATHS:
+- /home/room
+- /home/cave
+  `,
 
-Paths:
-- <a href="/home">/home</a>
-      `,
+  "/home/room": `
+LOCATION: /home/room
 
-      "/home/outside": `
-You step outside.
-The air feels wrong.
+Your room is untouched.
+Something feels off.
 
-Paths:
-- <a href="/home">/home</a>
-- <a href="/home/outside/forest">/home/outside/forest</a>
-      `,
+AVAILABLE PATHS:
+- /home
+  `,
 
-      "/home/outside/forest": `
-The forest is dark.
-You feel like you're not supposed to be here.
+  "/home/cave": `
+LOCATION: /home/cave
 
-Paths:
-- <a href="/home/outside">/home/outside</a>
-      `,
+A hidden entrance beneath the house.
 
-      "/secret": `
-You were not meant to find this.
+AVAILABLE PATHS:
+- /home
+- /home/cave/tunnel
+  `,
 
-No paths are listed.
-      `
-    };
+  "/home/cave/tunnel": `
+LOCATION: /home/cave/tunnel
 
-    function getPath() {
-      return location.hash.replace("#", "") || "/";
-    }
+The tunnel descends deeper.
+Scratches line the walls.
 
-    function render() {
-      const path = getPath();
-      const game = document.getElementById("game");
+AVAILABLE PATHS:
+- /home/cave
+- /home/cave/chamber
+  `,
 
-      if (paths[path]) {
-        game.innerHTML = paths[path];
-      } else {
-        game.innerHTML = `
-404: PATH NOT FOUND
+  "/home/cave/chamber": `
+LOCATION: /home/cave/chamber
 
-The system rejected:
+A sealed stone chamber.
+A terminal hums quietly.
+
+AVAILABLE PATHS:
+- /home/cave/tunnel
+  `,
+
+  "/forbidden": `
+LOCATION: /forbidden
+
+ACCESS LOGGED.
+THIS PATH SHOULD NOT EXIST.
+  `
+};
+
+function getPath() {
+  return location.hash.replace("#", "") || "/";
+}
+
+function render() {
+  const path = getPath();
+  const game = document.getElementById("game");
+
+  if (paths[path]) {
+    game.textContent = paths[path];
+  } else {
+    game.textContent = `
+ERROR 404
+
+PATH NOT FOUND:
 ${path}
 
-Try something else.
-        `;
-      }
-    }
+HINT:
+Paths are case-sensitive.
+Some paths are not listed.
+    `;
+  }
+}
 
-    window.addEventListener("hashchange", render);
+window.addEventListener("hashchange", render);
 
-    document.addEventListener("click", e => {
-      if (e.target.tagName === "A") {
-        e.preventDefault();
-        location.hash = e.target.getAttribute("href");
-      }
-    });
+// force hash routing
+if (!location.hash) {
+  location.hash = "/";
+}
 
-    if (!location.hash) {
-      location.hash = "/";
-    }
-
-    render();
-  </script>
+render();
+</script>
 </body>
 </html>
