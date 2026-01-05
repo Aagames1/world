@@ -39,113 +39,131 @@ if (!location.hash) location.hash = '#/home';
 const getPath = () => location.hash.slice(1) || '/home';
 
 /* ---------- STATE ---------- */
+let hasFlashlight = false;
+let flashlightNoticeShown = false;
 let boulderCleared = false;
 
 /* ---------- LOCATIONS ---------- */
 const locations = {
 
 "/home": `
-[ HOME ]
- _______
-|       |
-|  BED  |
-|_______|
+  [ HOME ]
+   _______
+  |       |
+  |  BED  |
+  |_______|
 
 You wake up alone.
 
-There is a way leading /outside
+A path leads /outside
 `,
 
 "/home/outside": `
-[ OUTSIDE ]
- 🌲     🌲
+  [ OUTSIDE ]
+   🌲     🌲
 
 The air is still.
 
-There is a /farm nearby.
+There's a /farm nearby.
 A darker opening leads to a /cave.
 `,
 
 "/home/outside/farm": `
-[ FARM ]
- 🌾🌾🌾
+  [ FARM ]
+   🌾🌾🌾
 
 A /hut sits quietly.
 An open /field stretches out.
 `,
 
 "/home/outside/farm/hut": `
-[ HUT ]
- _____
+  [ HUT ]
+   _____
 
 Dust coats everything.
 
-A locked /vault rests against the wall.
+A metal /vault rests against the wall.
 `,
 
 "/home/outside/farm/hut/vault": `
-[ VAULT ]
- ███████
+  [ VAULT ]
+  ███████
 
 A 5-letter lock.
-No hints are written.
 `,
 
 "/home/outside/farm/hut/vault/CORNY": `
-[ VAULT OPEN ]
- █ ▢ ▢ █
+  [ VAULT OPEN ]
+  █ ▢ ▢ █
 
-Inside, scribbled on the inner door:
+Inside:
+Bandages.
+A small flashlight.
 
-"/flashlight"
+You take it.
+`,
 
-It feels important.
+"/home/outside/farm/field": `
+  [ FIELD ]
+   🌽🌽🌽
+
+A rusted /tractor is parked here.
+`,
+
+"/home/outside/farm/field/tractor": `
+  [ TRACTOR ]
+
+A note reads:
+
+"Stop being CORNY."
 `,
 
 "/home/outside/cave": `
-[ CAVE ]
- █████
+  [ CAVE ]
+   █████
 
-It is extremely dark.
-
-You can barely make out shapes.
+It's dark.
+Too dark to move safely.
 `,
 
 "/home/outside/cave/flashlight": `
-[ CAVE — LIT ]
- █ 🔦 █
+  [ CAVE ]
+   █ 🔦 █
 
-The cave opens up.
+The beam reveals multiple paths.
 
-There is a rough /wall,
-a deep /hole,
-and a narrow /path.
+A rough /wall.
+A deep /hole.
+A narrow /path.
 `,
 
-"/home/outside/cave/flashlight/path": `
-[ NARROW PATH ]
- ████⛔████
+"/home/outside/cave/flashlight/path": {
+  text: `
+  [ NARROW PATH ]
+  ████⛔████
 
 A massive boulder blocks the way.
 
-Scratched into the stone:
+Scratched into stone:
 "inspect"
 `,
+  boulder: true
+},
 
 "/thewayforward": `
-[ BEYOND ]
- █   █
+  [ BEYOND ]
+   █   █
 
-The boulder is gone.
+The path is open now.
 
-A sign reads:
-"YOU HAVE BEEN WARNED"
+A warning sign reads:
+"YOU WERE WARNED"
 
 You may /continue
 `,
 
 "/continue": `
-[ END ]
+  [ END ]
 
 You step forward.
 
@@ -159,10 +177,11 @@ function render() {
   app.innerHTML = '';
 
   const path = getPath();
+  const loc = locations[path];
   const panel = document.createElement('div');
   panel.className = 'panel';
 
-  if (!locations[path]) {
+  if (!loc) {
     panel.classList.add('error');
     panel.innerHTML = `<pre>
 ┏━━━━━━━━━━━━━━┓
@@ -175,27 +194,31 @@ function render() {
     return;
   }
 
-  panel.innerHTML = `<pre>${locations[path]}</pre>`;
+  if (typeof loc === 'string') {
+    panel.innerHTML = `<pre>${loc}</pre>`;
+  } else {
+    panel.innerHTML = `<pre>${loc.text}</pre>`;
 
-  // Boulder rendering
-  if (path === '/home/outside/cave/flashlight/path' && !boulderCleared) {
-    const rock = document.createElement('pre');
-    rock.id = 'boulder';
-    rock.textContent =
+    if (loc.boulder && !boulderCleared) {
+      const rock = document.createElement('pre');
+      rock.id = 'boulder';
+      rock.textContent =
 `████████
 ████████
 ████████`;
-    panel.appendChild(rock);
+      panel.appendChild(rock);
+    }
+
+    if (loc.boulder && boulderCleared) {
+      panel.innerHTML += `<pre>\nThe obstruction is gone.\nThere is a /thewayforward</pre>`;
+    }
   }
 
-  // Reveal after removal
-  if (path === '/home/outside/cave/flashlight/path' && boulderCleared) {
-    panel.innerHTML += `<pre>
-
-The obstruction is gone.
-
-There is a /thewayforward
-</pre>`;
+  if (hasFlashlight && flashlightNoticeShown) {
+    const note = document.createElement('div');
+    note.className = 'notice';
+    note.textContent = '/FLASHLIGHT obtained. This could be useful somewhere else.';
+    panel.appendChild(note);
   }
 
   app.appendChild(panel);
@@ -204,7 +227,7 @@ There is a /thewayforward
 /* ---------- BOULDER INSPECT PUZZLE ---------- */
 const observer = new MutationObserver(() => {
   if (
-    getPath() === '/home/outside/cave/flashlight/path' &&
+    getPath().endsWith('/path') &&
     !document.getElementById('boulder') &&
     !boulderCleared
   ) {
@@ -214,8 +237,24 @@ const observer = new MutationObserver(() => {
 });
 observer.observe(document.body, { childList: true, subtree: true });
 
-/* ---------- HASH CHANGE ---------- */
-window.addEventListener('hashchange', render);
+/* ---------- PATH RULES ---------- */
+window.addEventListener('hashchange', () => {
+  const path = getPath();
+
+  // Flashlight acquisition
+  if (path.endsWith('/vault/CORNY') && !hasFlashlight) {
+    hasFlashlight = true;
+    flashlightNoticeShown = true;
+  }
+
+  // Cave restriction
+  if (path.includes('/cave/flashlight') && !hasFlashlight) {
+    location.hash = '#/home/outside/cave';
+    return;
+  }
+
+  render();
+});
 
 /* ---------- INIT ---------- */
 render();
