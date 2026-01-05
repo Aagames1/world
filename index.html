@@ -4,283 +4,185 @@
 <meta charset="UTF-8">
 <title>Puzzle World</title>
 <style>
-body { background-color: black; color: #39ff14; font-family: monospace; padding: 2rem; }
-a { color: #00ffff; text-decoration: none; }
-a:hover { text-decoration: underline; }
-.ascii-art { color: #ffcc00; margin: 1rem 0; }
-.hint { color: yellow; }
-.boulder { color: gray; border: 1px solid gray; padding: 1rem; text-align: center; margin: 1rem 0; }
-.error { color: red; border: 2px solid red; padding: 1rem; margin: 1rem 0; }
-pre { font-family: monospace; }
-.hidden { display: none; }
+  body {
+    background: black;
+    color: #00ffcc;
+    font-family: monospace;
+    padding: 20px;
+  }
+  .error {
+    color: red;
+    border: 2px solid red;
+    padding: 10px;
+  }
+  pre {
+    white-space: pre-wrap;
+  }
 </style>
 </head>
 <body>
 
-<h1>PUZZLE WORLD</h1>
+<pre id="game"></pre>
 
-<!-- START -->
-<div id="/start">
-<pre>
-Welcome, traveler.
-
-A mysterious puzzle adventure awaits.
-
-Click below to begin:
-- <a href="#/home">/home</a>
-</pre>
-<pre class="ascii-art">
+<script>
+/* ======================
+   LOCATION DEFINITIONS
+   ====================== */
+const locations = {
+  "/": `
 ╔════════════════════╗
 ║   PUZZLE WORLD     ║
 ╚════════════════════╝
-</pre>
-</div>
 
-<!-- HOME -->
-<div id="/home" class="hidden">
-<pre>
-You wake up in your home. Everyone seems gone.
+You are at the beginning.
 
-Step outside to explore:
-- <a href="#/home/outside">/home/outside</a>
-</pre>
-<pre class="ascii-art">
-╔════════════╗
-║    HOME    ║
-╚════════════╝
-</pre>
-</div>
+There is a /home here.
+`,
 
-<!-- OUTSIDE -->
-<div id="/home/outside" class="hidden">
-<pre>
-You step outside into a quiet world.
+  "/home": `
+  _____
+ |     |
+ | HOME|
+ |_____|
 
-To your left, a farm with crops.
-To your right, a dark cave entrance.
+Your house is silent.
 
-Navigate to:
-- <a href="#/home/outside/farm">/home/outside/farm</a>
-- <a href="#/home/outside/cave">/home/outside/cave</a>
-</pre>
-<pre class="ascii-art">
-   🌾🌾🌾🌾🌾      🕳️
-   FARM           CAVE
-</pre>
-</div>
+There's a /outside path.
+`,
 
-<!-- FARM -->
-<div id="/home/outside/farm" class="hidden">
-<pre>
-A modest farm spreads before you.
+  "/home/outside": `
+    🌾        🕳
+ FARM     CAVE
 
-Navigate to:
-- <a href="#/home/outside/farm/hut">/home/outside/farm/hut</a>
-- <a href="#/home/outside/farm/field">/home/outside/farm/field</a>
-</pre>
-<pre class="ascii-art">
-  🌾🌽🌾🌽🌾
-   FARM FIELDS
-</pre>
-</div>
+The world is empty.
 
-<!-- HUT -->
-<div id="/home/outside/farm/hut" class="hidden">
-<pre>
-Inside the hut you find a secure vault.
+There's a /farm to the left.
+There's a /cave to the right.
+`,
 
-Navigate to:
-- <a href="#/home/outside/farm/hut/vault">/home/outside/farm/hut/vault</a>
-</pre>
-<pre class="ascii-art">
- 🏚️ HUT INTERIOR
-</pre>
-</div>
+  "/home/outside/farm": `
+   🌾🌾🌾
+  🌾 FARM 🌾
+   🌾🌾🌾
 
-<!-- VAULT -->
-<div id="/home/outside/farm/hut/vault" class="hidden">
-<pre>
-Vault requires a 5-letter code.
+You see crops swaying.
 
-Hint: Explore the farm.
+There's a /hut here.
+There's a /field over there.
+`,
 
-Try entering:
-- <a href="#/home/outside/farm/hut/vault/CORNY">CORNY</a>
-</pre>
-<pre class="ascii-art">
-╔════════════╗
-║   VAULT    ║
-╚════════════╝
-</pre>
-</div>
+  "/home/outside/farm/hut": `
+   _______
+  |  HUT  |
+  |_______|
 
-<!-- VAULT UNLOCKED -->
-<div id="/home/outside/farm/hut/vault/CORNY" class="hidden">
-<pre>
-Vault opens! Inside you find:
-- FLASHLIGHT
-- A note: "<!-- password is ECHO42 -->"
+Dust covers everything.
 
-Now go to the cave:
-- <a href="#/home/outside/cave/flashlight/path">Enter Cave</a>
-</pre>
-<pre class="ascii-art">
-╔════════════════╗
-║  VAULT OPENED  ║
-╚════════════════╝
-</pre>
-</div>
+There's a /vault inside.
+`,
 
-<!-- FIELD -->
-<div id="/home/outside/farm/field" class="hidden">
-<pre>
-A field with crops. An old tractor sits here.
+  "/home/outside/farm/hut/vault": `
+┌───────────────┐
+│   VAULT       │
+│ CODE: ?????   │
+└───────────────┘
 
-Navigate to:
-- <a href="#/home/outside/farm/field/tractor">/home/outside/farm/field/tractor</a>
-</pre>
-<pre class="ascii-art">
-🌾🌽🌾🌽🌾
-FIELD
-</pre>
-</div>
+The lock hums quietly.
 
-<!-- TRACTOR -->
-<div id="/home/outside/farm/field/tractor" class="hidden">
-<pre>
-Under the tractor you find a note:
+(Explore the farm.)
+`,
 
-┌─────────────────────────────┐
-│ "What did the crop say?     │
-│  CORNY!"                     │
-└─────────────────────────────┘
+  "/home/outside/farm/hut/vault/CORNY": `
+VAULT OPENED ✔
 
-Return to vault:
-- <a href="#/home/outside/farm/hut/vault">Vault</a>
-</pre>
-<pre class="ascii-art">
-🚜 OLD TRACTOR
-</pre>
-</div>
+You found a FLASHLIGHT.
 
-<!-- CAVE ENTRANCE -->
-<div id="/home/outside/cave" class="hidden">
-<pre>
-The cave is dark. You need a flashlight.
+The cave might be safer now.
+`,
 
-If you have it, enter:
-- <a href="#/home/outside/cave/flashlight/path">Enter Cave Path</a>
-</pre>
-<pre class="ascii-art">
-🕳️ DARK CAVE
-</pre>
-</div>
+  "/home/outside/farm/field": `
+🌾🌾🌾🌾🌾
 
-<!-- CAVE PATH WITH BOULDER -->
-<div id="/home/outside/cave/flashlight/path" class="hidden">
-<pre>
-A massive boulder blocks the path.
+An abandoned tractor sits here.
+`,
 
-CHALLENGE: Inspect Element
-Remove the element below using browser dev tools to continue.
-</pre>
-<div class="boulder" id="blocking-rock">
-<pre>
-   ___________
-  /           \
- /   MASSIVE   \
-/    BOULDER    \
-\               /
- \_____________/
-</pre>
-<div class="hint">[Right-click → Inspect → Delete]</div>
-</div>
-<pre>
-Then proceed:
-- <a href="#/home/outside/cave/flashlight/path/beyond">Beyond Boulder</a>
-</pre>
+  "/home/outside/cave": `
+   ███████
+  █  CAVE █
+   ███████
 
-<pre class="ascii-art">
-🪨 BOULDER BLOCKING
-</pre>
-</div>
+It's extremely dark.
 
-<!-- PATH BEYOND -->
-<div id="/home/outside/cave/flashlight/path/beyond" class="hidden">
-<pre>
-The boulder is gone! A clearing with a mysterious facility appears.
+Something tells you light matters.
+`,
 
-Navigate to:
-- <a href="#/home/outside/cave/flashlight/path/beyond/terminal">/terminal</a>
-</pre>
-<pre class="ascii-art">
-🏢 FACILITY
-</pre>
-</div>
+  "/home/outside/cave/flashlight": `
+🔦 LIGHT ON
 
-<!-- TERMINAL -->
-<div id="/home/outside/cave/flashlight/path/beyond/terminal" class="hidden">
-<pre>
-Security Terminal login. Hint: SQL injection works here.
+The cave walls emerge.
 
-Try:
-- <a href="#/home/outside/cave/flashlight/path/beyond/terminal/lobby">Bypass Login</a>
-</pre>
-</div>
+There's a /path deeper inside.
+`,
 
-<!-- LOBBY -->
-<div id="/home/outside/cave/flashlight/path/beyond/terminal/lobby" class="hidden">
-<pre>
-SQL injection successful! Inside lobby.
+  "/home/outside/cave/flashlight/path": `
+###########
+# BOULDER #
+###########
 
-HTML comment on computer shows:
-<!-- Admin password: ECHO42 -->
+A massive rock blocks the way.
 
-Go to mainframe:
-- <a href="#/home/outside/cave/flashlight/path/beyond/terminal/mainframe">Mainframe</a>
-</pre>
-</div>
+INSPECT
 
-<!-- MAINFRAME -->
-<div id="/home/outside/cave/flashlight/path/beyond/terminal/mainframe" class="hidden">
-<pre>
-Mainframe prompts for password.
+(Use Inspect Element)
+`,
 
-Use password from vault or HTML comment: ECHO42
+  "/home/outside/cave/flashlight/path/beyond": `
+The boulder is gone.
 
-- <a href="#/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42">Enter ECHO42</a>
-</pre>
-</div>
+A facility stands ahead.
 
-<!-- FINAL -->
-<div id="/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42" class="hidden">
-<pre>
-MAINFRAME UNLOCKED! Congratulations, explorer!
+There's a /terminal.
+`,
 
-You have learned:
-✓ URL Navigation
-✓ Puzzle Solving
-✓ Inspect Element
-✓ SQL Injection
-✓ HTML Comments
+  "/home/outside/cave/flashlight/path/beyond/terminal": `
+┌─────────────┐
+│ TERMINAL    │
+│ LOGIN       │
+└─────────────┘
 
-Type #/start to restart the game.
-</pre>
-</div>
+The screen flickers.
+`
+};
 
-<script>
-function showPath() {
-    const hash = window.location.hash || '#/start';
-    document.querySelectorAll('div[id]').forEach(d => d.classList.add('hidden'));
-    const id = hash.substring(1);
-    const el = document.getElementById(id);
-    if(el) el.classList.remove('hidden');
-    else {
-        document.body.innerHTML = '<div class="error">\n╔══════════════╗\n║ WRONG PATH   ║\n╚══════════════╝\n"' + id + '" does not exist.\n</div>';
-    }
+/* ======================
+   RENDER LOGIC
+   ====================== */
+function getPath() {
+  return location.hash.replace("#", "") || "/";
 }
-window.addEventListener('hashchange', showPath);
-window.addEventListener('load', showPath);
+
+function render() {
+  const path = getPath();
+  const game = document.getElementById("game");
+
+  if (!locations[path]) {
+    game.innerHTML = `
+┏━━━━━━━━━━━━━━┓
+┃ WRONG PATH   ┃
+┗━━━━━━━━━━━━━━┛
+
+"${path}" does not exist.
+`;
+    game.className = "error";
+    return;
+  }
+
+  game.className = "";
+  game.textContent = locations[path];
+}
+
+window.addEventListener("hashchange", render);
+render();
 </script>
 
 </body>
