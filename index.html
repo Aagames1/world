@@ -24,6 +24,9 @@ pre {
   white-space: pre-wrap;
   margin: 0;
 }
+.notice {
+  color: #a7f3d0;
+}
 </style>
 </head>
 <body>
@@ -31,18 +34,16 @@ pre {
 <div id="app"></div>
 
 <script>
-/* ---------------- ROUTING ---------------- */
+/* ---------- ROUTING ---------- */
 if (!location.hash) location.hash = '#/home';
+const getPath = () => location.hash.slice(1) || '/home';
 
-function getPath() {
-  return location.hash.replace('#','') || '/home';
-}
+/* ---------- STATE ---------- */
+let hasFlashlight = false;
+let flashlightNoticeShown = false;
+let boulderCleared = false;
 
-/* ---------------- GAME STATE ---------------- */
-let inventory = [];
-let boulderRemoved = false;
-
-/* ---------------- LOCATIONS ---------------- */
+/* ---------- LOCATIONS ---------- */
 const locations = {
 
 "/home": `
@@ -53,43 +54,35 @@ const locations = {
   |_______|
 
 You wake up alone.
-The world is silent.
 
-There is a way leading /outside
+A path leads /outside
 `,
 
 "/home/outside": `
   [ OUTSIDE ]
-     ☁ ☁
    🌲     🌲
 
-Fresh air.
-Paths split here.
+The air is still.
 
-There is a /farm nearby.
-A darker trail leads to a /cave.
+There's a /farm nearby.
+A darker opening leads to a /cave.
 `,
 
 "/home/outside/farm": `
   [ FARM ]
    🌾🌾🌾
-   🌾🌾🌾
 
-Crops sway gently.
-
-There's a small /hut.
-An open /field stretches outward.
+A /hut sits quietly.
+An open /field stretches out.
 `,
 
 "/home/outside/farm/hut": `
   [ HUT ]
    _____
-  |_____| 
 
-Dusty and empty.
+Dust coats everything.
 
-Something metal catches your eye.
-A locked /vault sits here.
+A metal /vault rests against the wall.
 `,
 
 "/home/outside/farm/hut/vault": `
@@ -97,7 +90,6 @@ A locked /vault sits here.
   ███████
 
 A 5-letter lock.
-No hints. Just silence.
 `,
 
 "/home/outside/farm/hut/vault/CORNY": `
@@ -105,51 +97,44 @@ No hints. Just silence.
   █ ▢ ▢ █
 
 Inside:
-- medical supplies
-- a flashlight
+Bandages.
+A small flashlight.
 
-You take the /flashlight.
+You take it.
 `,
 
 "/home/outside/farm/field": `
   [ FIELD ]
    🌽🌽🌽
-   🌽🌽🌽
 
-A broken /tractor sits idle.
+A rusted /tractor is parked here.
 `,
 
 "/home/outside/farm/field/tractor": `
   [ TRACTOR ]
-   ______
-  |_____|_
 
-A sticky note reads:
+A note reads:
 
-"What did the crop say?
-Stop being CORNY."
+"Stop being CORNY."
 `,
 
 "/home/outside/cave": `
   [ CAVE ]
    █████
-  █     █
 
-Dark.
-Too dark to see anything useful.
-
-It feels unwise to continue.
+It's dark.
+Too dark to move safely.
 `,
 
 "/home/outside/cave/flashlight": `
-  [ CAVE LIT ]
-   █  🔦  █
+  [ CAVE ]
+   █ 🔦 █
 
-Light reveals paths.
+The beam reveals multiple paths.
 
-There is a rough /wall.
+A rough /wall.
 A deep /hole.
-And a narrow /path forward.
+A narrow /path.
 `,
 
 "/home/outside/cave/flashlight/path": {
@@ -158,8 +143,8 @@ And a narrow /path forward.
   ████⛔████
 
 A massive boulder blocks the way.
-Scratched into stone:
 
+Scratched into stone:
 "inspect"
 `,
   boulder: true
@@ -169,7 +154,7 @@ Scratched into stone:
   [ BEYOND ]
    █   █
 
-The boulder is gone.
+The path is open now.
 
 A warning sign reads:
 "YOU WERE WARNED"
@@ -179,29 +164,26 @@ You may /continue
 
 "/continue": `
   [ END ]
-   ███
 
-You disappear into the dark.
+You step forward.
 
 (To be continued)
 `
 };
 
-/* ---------------- RENDER ---------------- */
+/* ---------- RENDER ---------- */
 function render() {
   const app = document.getElementById('app');
   app.innerHTML = '';
 
   const path = getPath();
   const loc = locations[path];
-
   const panel = document.createElement('div');
   panel.className = 'panel';
 
   if (!loc) {
     panel.classList.add('error');
-    panel.innerHTML = `
-<pre>
+    panel.innerHTML = `<pre>
 ┏━━━━━━━━━━━━━━┓
 ┃ WRONG PATH   ┃
 ┗━━━━━━━━━━━━━━┛
@@ -217,7 +199,7 @@ function render() {
   } else {
     panel.innerHTML = `<pre>${loc.text}</pre>`;
 
-    if (loc.boulder && !boulderRemoved) {
+    if (loc.boulder && !boulderCleared) {
       const rock = document.createElement('pre');
       rock.id = 'boulder';
       rock.textContent =
@@ -227,39 +209,54 @@ function render() {
       panel.appendChild(rock);
     }
 
-    if (loc.boulder && boulderRemoved) {
-      panel.innerHTML += `<pre>\nThe path forward is clear.\nYou see /thewayforward</pre>`;
+    if (loc.boulder && boulderCleared) {
+      panel.innerHTML += `<pre>\nThe obstruction is gone.\nThere is a /thewayforward</pre>`;
     }
   }
 
-  if (inventory.length) {
-    panel.innerHTML += `<pre>\nInventory: ${inventory.join(', ')}</pre>`;
+  if (hasFlashlight && flashlightNoticeShown) {
+    const note = document.createElement('div');
+    note.className = 'notice';
+    note.textContent = '/FLASHLIGHT obtained. This could be useful somewhere else.';
+    panel.appendChild(note);
   }
 
   app.appendChild(panel);
 }
 
-/* ---------------- BOULDER INSPECT PUZZLE ---------------- */
-new MutationObserver(() => {
-  if (!document.getElementById('boulder') && getPath().endsWith('/path')) {
-    boulderRemoved = true;
+/* ---------- BOULDER INSPECT PUZZLE ---------- */
+const observer = new MutationObserver(() => {
+  if (
+    getPath().endsWith('/path') &&
+    !document.getElementById('boulder') &&
+    !boulderCleared
+  ) {
+    boulderCleared = true;
     render();
   }
-}).observe(document.body, { childList: true, subtree: true });
+});
+observer.observe(document.body, { childList: true, subtree: true });
 
-/* ---------------- INVENTORY CHECKS ---------------- */
+/* ---------- PATH RULES ---------- */
 window.addEventListener('hashchange', () => {
-  if (getPath().endsWith('/flashlight') && !inventory.includes('flashlight')) {
-    location.hash = '#/home/outside/cave';
+  const path = getPath();
+
+  // Flashlight acquisition
+  if (path.endsWith('/vault/CORNY') && !hasFlashlight) {
+    hasFlashlight = true;
+    flashlightNoticeShown = true;
   }
 
-  if (getPath().endsWith('/vault/CORNY') && !inventory.includes('flashlight')) {
-    inventory.push('flashlight');
+  // Cave restriction
+  if (path.includes('/cave/flashlight') && !hasFlashlight) {
+    location.hash = '#/home/outside/cave';
+    return;
   }
 
   render();
 });
 
+/* ---------- INIT ---------- */
 render();
 </script>
 
