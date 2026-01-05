@@ -1,269 +1,228 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Puzzle World</title>
-
-<style>
-body {
-  background: black;
-  color: #16a34a;
-  font-family: monospace;
-  margin: 0;
-  padding: 20px;
-}
-.panel {
-  border: 1px solid #16a34a;
-  padding: 16px;
-}
-.error {
-  color: #ff4444;
-  border-color: #ff4444;
-}
-pre {
-  white-space: pre-wrap;
-  margin: 0;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puzzle World</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; color: #0f0; font-family: 'Courier New', monospace; min-height: 100vh; }
+        .header { border-bottom: 2px solid #0f0; padding: 1rem; }
+        .header-content { max-width: 1024px; margin: 0 auto; }
+        .version { font-size: 0.75rem; margin-bottom: 0.5rem; }
+        .url-display { display: flex; align-items: center; gap: 0.5rem; }
+        .url-path { color: #fff; }
+        .warning { color: #ff0; font-size: 0.75rem; margin-top: 0.75rem; }
+        .container { max-width: 1024px; margin: 0 auto; padding: 2rem; }
+        .content-box { border: 2px solid #0f0; padding: 2rem; margin-bottom: 1.5rem; }
+        .title { font-size: 1.5rem; color: #0ff; margin-bottom: 1rem; }
+        .divider { border-top: 1px solid #0f0; opacity: 0.5; margin-bottom: 1rem; }
+        .content { white-space: pre-wrap; line-height: 1.5; font-size: 0.875rem; }
+        .input-box { border: 1px solid #0f0; padding: 1rem; margin-top: 1.5rem; }
+        .input-label { color: #ff0; margin-bottom: 0.75rem; }
+        .input-group { display: flex; gap: 0.5rem; }
+        input { flex: 1; background: #000; color: #0f0; border: 1px solid #0f0; padding: 0.5rem; font-family: 'Courier New', monospace; }
+        input:focus { outline: none; border-color: #0ff; }
+        button { background: #000; color: #0f0; border: 1px solid #0f0; padding: 0.5rem 1rem; font-family: 'Courier New', monospace; cursor: pointer; }
+        button:hover { background: #0f0; color: #000; }
+        #blockingRock { border: 2px solid #666; padding: 1.5rem; text-align: center; color: #888; margin-top: 1.5rem; }
+        .rock-art { font-size: 1.5rem; margin-bottom: 1rem; }
+        .rock-hint { font-size: 0.75rem; color: #666; }
+        .revealed { border: 2px solid #0f0; padding: 1rem; text-align: center; color: #0f0; margin-top: 1.5rem; }
+        .victory { border: 2px solid #ff0; padding: 1rem; text-align: center; color: #ff0; margin-top: 1.5rem; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .footer { border: 1px solid #060; padding: 1rem; font-size: 0.75rem; color: #060; }
+        .footer-title { font-weight: bold; margin-bottom: 0.5rem; margin-top: 1rem; }
+        .footer-item { margin-bottom: 0.25rem; }
+        .hidden { display: none; }
+    </style>
 </head>
 <body>
+    <div class="header">
+        <div class="header-content">
+            <div class="version">PUZZLE WORLD TERMINAL v2.0</div>
+            <div class="url-display">
+                <span>Current Location:</span>
+                <span class="url-path" id="currentUrl">#/</span>
+            </div>
+            <div class="warning">⚠ Change the URL in your browser's address bar to navigate (use # before paths)</div>
+        </div>
+    </div>
 
-<div id="app"></div>
+    <div class="container">
+        <div class="content-box">
+            <div class="title" id="locationTitle">> PUZZLE WORLD</div>
+            <div class="divider"></div>
+            <div class="content" id="locationContent"></div>
+            
+            <div class="input-box hidden" id="sqlAuthBox">
+                <div class="input-label">USERNAME AUTHENTICATION:</div>
+                <div class="input-group">
+                    <input type="text" id="sqlAuthInput" placeholder="Enter username...">
+                    <button onclick="handleSqlAuth()">LOGIN</button>
+                </div>
+            </div>
 
-<script>
-/* ---------------- ROUTING ---------------- */
-if (!location.hash) location.hash = '#/home';
+            <div class="input-box hidden" id="passwordBox">
+                <div class="input-label">ENTER PASSWORD:</div>
+                <div class="input-group">
+                    <input type="text" id="passwordInput" placeholder="Password...">
+                    <button onclick="handlePassword()">SUBMIT</button>
+                </div>
+            </div>
 
-function getPath() {
-  return location.hash.replace('#','') || '/home';
-}
+            <div class="input-box hidden" id="vaultBox">
+                <div class="input-label">ENTER 5-LETTER CODE:</div>
+                <div class="input-group">
+                    <input type="text" id="vaultInput" placeholder="_ _ _ _ _" maxlength="5" style="text-transform: uppercase;">
+                    <button onclick="handleVaultCode()">SUBMIT</button>
+                </div>
+            </div>
 
-/* ---------------- GAME STATE ---------------- */
-let inventory = [];
-let boulderRemoved = false;
+            <div id="blockingRock" class="hidden">
+                <div class="rock-art">    ___________
+   /           \
+  /   MASSIVE   \
+ /    BOULDER    \
+/       🪨        \
+\                /
+ \______________/</div>
+                <div class="rock-hint">[Right-click and Inspect Element to examine this obstacle]</div>
+                <div class="hidden" data-secret="true">SECRET: Delete this element with DevTools, then navigate to #/home/outside/cave/flashlight/path/beyond</div>
+            </div>
 
-/* ---------------- LOCATIONS ---------------- */
-const locations = {
+            <div class="revealed hidden" id="rockRevealed">▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+   THE ROCK HAS VANISHED!
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-"/home": `
-  [ HOME ]
-   _______
-  |       |
-  |  BED  |
-  |_______|
+A new path has been revealed.</div>
 
-You wake up alone.
-The world is silent.
+            <div class="victory hidden" id="victoryBox">
+                <div style="font-size: 1.25rem; margin-bottom: 0.5rem;">★ PUZZLE COMPLETE ★</div>
+                <div style="font-size: 0.75rem; margin-top: 0.5rem;">Navigate to #/ to restart</div>
+            </div>
+        </div>
 
-There is a way leading /outside
+        <div class="footer">
+            <div class="footer-title" style="margin-top: 0;">HOW TO PLAY:</div>
+            <div class="footer-item">• Change your browser's URL to navigate (use # before paths)</div>
+            <div class="footer-item">• Example: Type #/home in the address bar</div>
+            <div class="footer-item">• All available paths are listed at each location</div>
+            <div class="footer-title">WEB SECURITY CHALLENGES:</div>
+            <div class="footer-item">• URL Navigation & Hash Routing</div>
+            <div class="footer-item">• Inspect Element (DOM Manipulation)</div>
+            <div class="footer-item">• SQL Injection (Authentication Bypass)</div>
+            <div class="footer-item">• HTML Comments (Information Disclosure)</div>
+            <div class="footer-item">• Cookie Manipulation (Privilege Escalation)</div>
+            <div class="footer-item">• Query Parameters</div>
+        </div>
+    </div>
 
-Navigate the world by editing the url, try /home/outside
-`,
+    <script>
+        // Initialize with home if no hash
+        if (!location.hash || location.hash === '#' || location.hash === '#/') {
+            location.hash = '#/home';
+        }
 
-"/home/outside": `
-  [ OUTSIDE ]
-     ☁ ☁
-   🌲     🌲
+        const L = {
+            '/home': ['YOUR HOME', 'You wake up in your home, only to realize that everyone has seemingly \ndisappeared. You\'re the only one in this seemingly empty world. \nThe silence is eerie.\n\nAvailable paths:\n  #/home/outside\n  #/home/bedroom\n  #/home/kitchen'],
+            '/home/bedroom': ['YOUR BEDROOM', 'Your bedroom looks untouched. The bed is made, clothes hang in the closet.\nEverything is exactly as you left it, yet somehow feels wrong.\n\nAvailable paths:\n  #/home'],
+            '/home/kitchen': ['YOUR KITCHEN', 'The kitchen is spotless. No dirty dishes, no food left out.\nA calendar on the wall shows today\'s date circled in red ink.\n\nAvailable paths:\n  #/home'],
+            '/home/outside': ['OUTSIDE YOUR HOME', 'You step outside into an unnaturally quiet world.\n\nTo your left, you see a farm with fields of crops.\nTo your right, a dark cave entrance looms ominously.\n\nAvailable paths:\n  #/home/outside/cave\n  #/home/outside/farm\n  #/home'],
+            '/home/outside/cave': ['CAVE ENTRANCE', 'The cave entrance is pitch black. You can barely see a few feet inside.\n\nIt\'s very dark - you don\'t think it\'s the best idea to explore it without light.\n\nAvailable paths:\n  #/home/outside/cave/entrance\n  #/home/outside/cave/flashlight\n  #/home/outside'],
+            '/home/outside/cave/entrance': ['DEEPER IN THE CAVE', 'Without a flashlight, you stumble in the darkness. You can\'t see anything.\n\nThis is too dangerous. You should find a light source first.\n\nAvailable paths:\n  #/home/outside/cave'],
+            '/home/outside/cave/flashlight': ['CAVE WITH LIGHT', 'You turn on the flashlight and venture into the cave.\n\nThe beam cuts through the darkness, revealing ancient stone walls.\n\nA weathered sign reads:\n┌─────────────────────┐\n│  DO NOT TRESPASS    │\n└─────────────────────┘\n\nAvailable paths:\n  #/home/outside/cave/flashlight/tunnel\n  #/home/outside/cave/flashlight/path\n  #/home/outside/cave'],
+            '/home/outside/cave/flashlight/tunnel': ['CAVE TUNNEL', 'The tunnel narrows. Ancient markings cover the walls.\n\nYou notice paths branching off in different directions.\n\nAvailable paths:\n  #/home/outside/cave/flashlight/tunnel/left\n  #/home/outside/cave/flashlight/tunnel/right\n  #/home/outside/cave/flashlight'],
+            '/home/outside/cave/flashlight/tunnel/left': ['LEFT PASSAGE', 'You take the left passage. The walls are damp and cold.\n\nAfter a while, you reach a dead end. Nothing here.\n\nAvailable paths:\n  #/home/outside/cave/flashlight/tunnel'],
+            '/home/outside/cave/flashlight/tunnel/right': ['RIGHT PASSAGE', 'You take the right passage. It slopes downward steeply.\n\nThe air grows colder. This passage also leads nowhere.\n\nAvailable paths:\n  #/home/outside/cave/flashlight/tunnel'],
+            '/home/outside/cave/flashlight/path': ['THE NARROW PATH', 'You venture down the narrow path, squeezing between giant rocks \nand stalagmites. The walls close in around you.\n\nSuddenly, your light illuminates a massive boulder blocking the path.\nNothing you do seems to budge it.\n\nStrangely, you notice a word scratched into the rock\'s surface:\n\n         ███████████████████\n         █                 █\n         █    INSPECT      █\n         █                 █\n         ███████████████████\n                 █\n                 █\n\nAvailable paths:\n  #/home/outside/cave/flashlight/path/beyond\n  #/home/outside/cave/flashlight', '', 'rock'],
+            '/home/outside/cave/flashlight/path/beyond': ['BEYOND THE ROCK', 'The rock vanishes as if it was never there. \n\nYou continue forward and emerge into a clearing. In the distance, you see\na mysterious facility with blinking lights.\n\nA sign reads: "SECURITY TERMINAL - AUTHORIZED ACCESS ONLY"\n\nAvailable paths:\n  #/home/outside/cave/flashlight/path/beyond/terminal\n  #/home/outside/cave/flashlight/path'],
+            '/home/outside/cave/flashlight/path/beyond/terminal': ['SECURITY TERMINAL', 'A high-tech terminal building stands before you. The door is locked.\n\nA keypad next to the door reads:\n\n┌─────────────────────────────────────┐\n│  SECURITY TERMINAL ACCESS           │\n│  Enter Username: ___________        │\n│                                     │\n│  Only authorized personnel allowed  │\n└─────────────────────────────────────┘\n\nThere\'s a small note taped to the wall:\n"Admin credentials required. Username: admin, Password: [REDACTED]"\n\nAvailable paths:\n  #/home/outside/cave/flashlight/path/beyond/terminal/entrance\n  #/home/outside/cave/flashlight/path/beyond/terminal/lobby\n  #/home/outside/cave/flashlight/path/beyond', 'sql'],
+            '/home/outside/cave/flashlight/path/beyond/terminal/entrance': ['TERMINAL ENTRANCE', 'The door remains locked. You need proper credentials to enter.\n\nAvailable paths:\n  #/home/outside/cave/flashlight/path/beyond/terminal'],
+            '/home/outside/cave/flashlight/path/beyond/terminal/lobby': ['TERMINAL - LOBBY', 'Access granted.\n\n╔════════════════════════════════════╗\n║   PUZZLE WORLD SECURITY SYSTEM     ║\n╚════════════════════════════════════╝\n\nYou\'re in the lobby. A receptionist desk has an old computer.\n\nLooking at the screen, you see it\'s displaying a webpage.\n\nAvailable paths:\n  #/home/outside/cave/flashlight/path/beyond/terminal/lobby/computer\n  #/home/outside/cave/flashlight/path/beyond/terminal/lobby/hallway\n  #/home/outside/cave/flashlight/path/beyond/terminal'],
+            '/home/outside/cave/flashlight/path/beyond/terminal/lobby/computer': ['RECEPTIONIST COMPUTER', 'You examine the computer screen more closely.\n\nThe browser is open to an employee portal. The page looks normal.\n\n<!-- Hmm, I wonder if there are any hidden comments in the page source? -->\n<!-- Admin password: ECHO42 -->\n\nAvailable paths:\n  #/home/outside/cave/flashlight/path/beyond/terminal/lobby'],
+            '/home/outside/cave/flashlight/path/beyond/terminal/lobby/hallway': ['TERMINAL HALLWAY', 'A long hallway stretches before you with flickering fluorescent lights.\n\nDoors line both sides, most are locked. One door has a sign: "MAINFRAME ACCESS"\n\nAvailable paths:\n  #/home/outside/cave/flashlight/path/beyond/terminal/mainframe\n  #/home/outside/cave/flashlight/path/beyond/terminal/lobby'],
+            '/home/outside/cave/flashlight/path/beyond/terminal/mainframe': ['MAINFRAME ACCESS', 'You approach the mainframe access panel.\n\nA terminal prompts you:\n\n┌─────────────────────────────────────┐\n│  MAINFRAME AUTHENTICATION           │\n│  Username: admin                    │\n│  Password: ___________              │\n│                                     │\n│  Enter password to continue         │\n└─────────────────────────────────────┘\n\nAvailable paths:\n  #/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42\n  #/home/outside/cave/flashlight/path/beyond/terminal/lobby/hallway', 'pass'],
+            '/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42': ['MAINFRAME - ACCESS GRANTED', 'Password accepted!\n\n▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\n\n>>> MAINFRAME ACCESS GRANTED <<<\n\n▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\n\nYou\'re now in the system.\n\nAvailable paths:\n  #/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42/files\n  #/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42/settings\n  #/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42/data\n  #/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42/admin\n  #/home/outside/cave/flashlight/path/beyond/terminal/mainframe'],
+            '/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42/files': ['SYSTEM FILES', 'Reading system files...\n\nFILE: "system_config.txt"\n┌─────────────────────────────────────┐\n│  SYSTEM CONFIGURATION               │\n│  --------------------------------   │\n│  User Access Level: GUEST           │\n│  Admin Panel: RESTRICTED            │\n│                                     │\n│  To elevate privileges, user        │\n│  cookies must be properly set.      │\n└─────────────────────────────────────┘\n\nAvailable paths:\n  #/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42'],
+            '/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42/settings': ['SECURITY SETTINGS', 'SECURITY CONFIGURATION PANEL\n\nThe system checks for a cookie named "userLevel" to determine access rights.\n\nIf this cookie is set to "admin", full system access is granted.\n\nOpen DevTools (F12), go to Console, and type:\ndocument.cookie = "userLevel=admin"\n\nAvailable paths:\n  #/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42'],
+            '/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42/data': ['DATA ARCHIVES', 'You browse through old data archives.\n\nMost files are corrupted or encrypted. One readable file catches your eye:\n\n"research_notes.txt"\n┌─────────────────────────────────────┐\n│  The final chamber contains the     │\n│  source of all the anomalies.       │\n│                                     │\n│  Access requires admin privileges   │\n│  and a security key parameter.      │\n└─────────────────────────────────────┘\n\nAvailable paths:\n  #/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42'],
+            '/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42/admin': ['ADMIN PANEL', '', 'cookie'],
+            '/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42/admin/finalchamber': ['FINAL CHAMBER - LOCKED', 'You approach the final chamber, but it\'s locked.\n\nA keypad next to the door reads:\n\n┌─────────────────────────────────────┐\n│  FINAL CHAMBER ACCESS               │\n│  Security Key Required              │\n│                                     │\n│  The key must be provided as a      │\n│  URL query parameter.               │\n└─────────────────────────────────────┘\n\nERROR: Missing \'key\' parameter in URL\n\nAvailable paths:\n  #/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42/admin/finalchamber?key=VICTORY2025\n  #/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42/admin'],
+            '/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42/admin/finalchamber?key=VICTORY2025': ['THE FINAL CHAMBER', 'Security key accepted! The door slides open with a hiss.\n\nYou step into a massive chamber bathed in ethereal light.\n\nIn the center, a pedestal glows with otherworldly energy.\nOn it rests a crystalline orb pulsing with power.\n\nAs you approach, holographic text materializes in the air:\n\n╔═══════════════════════════════════════════════════════════╗\n║                                                           ║\n║            CONGRATULATIONS, EXPLORER!                     ║\n║                                                           ║\n║  You\'ve mastered the fundamentals of web security:       ║\n║                                                           ║\n║  ✓ URL Navigation & Hash Routing                         ║\n║  ✓ Puzzle Solving & Pattern Recognition                  ║\n║  ✓ Inspect Element (DOM Manipulation)                    ║\n║  ✓ SQL Injection (Authentication Bypass)                 ║\n║  ✓ HTML Comments (Information Disclosure)                ║\n║  ✓ Cookie Manipulation (Privilege Escalation)            ║\n║  ✓ Query Parameters (Input Validation)                   ║\n║                                                           ║\n║  These skills form the foundation of web security        ║\n║  testing and ethical hacking. Use them responsibly!      ║\n║                                                           ║\n║                    === VICTORY ===                        ║\n║                                                           ║\n╚═══════════════════════════════════════════════════════════╝\n\nThe orb\'s light grows brighter, filling the entire chamber...\n\nAvailable paths:\n  #/home (restart)', '', '', 'win'],
+            '/home/outside/farm': ['THE FARM', 'A modest farm spreads before you. \n\nYou see a small hut with the door slightly ajar.\nBeyond it, an open field stretches into the distance.\n\nAvailable paths:\n  #/home/outside/farm/hut\n  #/home/outside/farm/field\n  #/home/outside'],
+            '/home/outside/farm/hut': ['INSIDE THE HUT', 'The hut is mostly empty, dust particles floating in beams of light.\n\nAgainst the back wall, you notice a secure vault with a digital lock.\n\nAvailable paths:\n  #/home/outside/farm/hut/vault\n  #/home/outside/farm'],
+            '/home/outside/farm/hut/vault': ['THE VAULT', 'A heavy metal vault stands before you.\n\nIt has a digital lock requiring a 5-letter code.\nThe screen blinks, waiting for input.\n\n> Enter code: _____\n\nAvailable paths:\n  #/home/outside/farm/hut/vault/CORNY\n  #/home/outside/farm/hut', 'code'],
+            '/home/outside/farm/field': ['THE FIELD', 'The field is vast, full of crops of wheat and corn swaying gently.\n\nAn old tractor sits abandoned near the edge of the field.\n\nAvailable paths:\n  #/home/outside/farm/field/tractor\n  #/home/outside/farm/field/barn\n  #/home/outside/farm'],
+            '/home/outside/farm/field/barn': ['OLD BARN', 'An old barn stands at the edge of the field. The wood is weathered and cracked.\n\nInside, farming equipment lies covered in dust. Nothing useful here.\n\nAvailable paths:\n  #/home/outside/farm/field'],
+            '/home/outside/farm/field/tractor': ['THE TRACTOR', 'You try to start the tractor, but the engine is missing entirely.\n\nLooking around for clues, you find a sticky note stuck to the bottom:\n\n┌─────────────────────────────────────┐\n│ "What did the crop say to the      │\n│  other crop? Stop being CORNY!"    │\n└─────────────────────────────────────┘\n\nAvailable paths:\n  #/home/outside/farm/field'],
+            '/home/outside/farm/hut/vault/CORNY': ['VAULT UNLOCKED', 'You enter "CORNY" into the keypad.\n\n▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\n\n>>> ACCESS GRANTED <<<\n\n▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\n\nWith a satisfying click, the vault door swings open!\n\nInside you find:\n  - First aid supplies\n  - A working FLASHLIGHT\n  - A crumpled note with strange text\n\nThe note reads: "<!-- password is ECHO42 -->"\n\nNow you know the flashlight exists at #/home/outside/cave/flashlight\n\nAvailable paths:\n  #/home/outside/farm/hut']
+        };
 
-Fresh air.
-Paths split here.
+        function getCookie(n) {
+            const c = document.cookie.split(';');
+            for (let i = 0; i < c.length; i++) {
+                const [k, v] = c[i].trim().split('=');
+                if (k === n) return v;
+            }
+            return null;
+        }
 
-There is a /farm nearby.
-A darker trail leads to a /cave.
-`,
+        function getPath() {
+            return location.hash.replace('#', '') || '/home';
+        }
 
-"/home/outside/farm": `
-  [ FARM ]
-   🌾🌾🌾
-   🌾🌾🌾
+        function update() {
+            const p = getPath();
+            
+            document.getElementById('currentUrl').textContent = '#' + p;
+            
+            ['sqlAuthBox', 'passwordBox', 'vaultBox', 'blockingRock', 'rockRevealed', 'victoryBox'].forEach(id => 
+                document.getElementById(id).classList.add('hidden')
+            );
+            
+            let loc = L[p];
+            
+            if (p === '/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42/admin') {
+                if (getCookie('userLevel') === 'admin') {
+                    loc = ['ADMIN PANEL', 'Admin access verified!\n\n╔════════════════════════════════════╗\n║     ADMINISTRATOR PANEL            ║\n╚════════════════════════════════════╝\n\nYou now have full system access.\n\nReading restricted files...\n\nFILE: "final_chamber_key.txt"\n┌─────────────────────────────────────┐\n│  FINAL CHAMBER ACCESS               │\n│  --------------------------------   │\n│  The path to the final chamber      │\n│  requires a security key parameter. │\n│                                     │\n│  Key: VICTORY2025                   │\n│                                     │\n│  Append this as a query parameter   │\n│  to the finalchamber URL.           │\n└─────────────────────────────────────┘\n\nAvailable paths:\n  #/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42/admin/finalchamber\n  #/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42'];
+                } else {
+                    loc = ['ADMIN PANEL', 'ACCESS DENIED\n\n╔════════════════════════════════════╗\n║  ERROR: INSUFFICIENT PRIVILEGES    ║\n║  Administrator access required     ║\n╚════════════════════════════════════╝\n\nYou need admin-level access to view this panel.\nSet the userLevel cookie to "admin" in /settings\n\nAvailable paths:\n  #/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42'];
+                }
+            }
+            
+            if (!loc) {
+                loc = ['404 - PATH NOT FOUND', `ERROR: This location doesn't exist.\n\nThe path "${p}" could not be found.\n\nTry exploring different paths or return to the start.\n\nAvailable paths:\n  #/home`];
+            }
+            
+            document.getElementById('locationTitle').textContent = '> ' + loc[0];
+            document.getElementById('locationContent').textContent = loc[1];
+            
+            if (loc[2] === 'sql') document.getElementById('sqlAuthBox').classList.remove('hidden');
+            if (loc[2] === 'pass') document.getElementById('passwordBox').classList.remove('hidden');
+            if (loc[2] === 'code') document.getElementById('vaultBox').classList.remove('hidden');
+            if (loc[2] === 'rock') {
+                const rock = document.getElementById('blockingRock');
+                if (rock.style.display !== 'none') {
+                    rock.classList.remove('hidden');
+                } else {
+                    document.getElementById('rockRevealed').classList.remove('hidden');
+                }
+            }
+            if (loc[3] === 'win') document.getElementById('victoryBox').classList.remove('hidden');
+        }
 
-Crops sway gently.
+        function handleSqlAuth() {
+            const u = document.getElementById('sqlAuthInput').value.trim();
+            if (u.includes("'") || u.includes("--") || u.toLowerCase().includes("or") || u.includes("1=1")) {
+                location.hash = '#/home/outside/cave/flashlight/path/beyond/terminal/lobby';
+            } else if (u.toLowerCase() === 'admin') {
+                alert('ERROR: Password required.');
+            } else {
+                alert('ERROR: User not found.');
+            }
+        }
 
-There's a small /hut.
-An open /field stretches outward.
-`,
-
-"/home/outside/farm/hut": `
-  [ HUT ]
-   _____
-  |_____| 
-
-Dusty and empty.
-
-Something metal catches your eye.
-A locked /vault sits here.
-`,
-
-"/home/outside/farm/hut/vault": `
-  [ VAULT ]
-  ███████
-
-A 5-letter lock.
-/vault/?????.
-`,
-
-"/home/outside/farm/hut/vault/CORNY": `
-  [ VAULT OPEN ]
-  █ ▢ ▢ █
-
-Inside:
-- medical supplies
-- a flashlight
-
-You take the /flashlight. Perhaps this could be useful somewhere else.
-`,
-
-"/home/outside/farm/field": `
-  [ FIELD ]
-   🌽🌽🌽
-   🌽🌽🌽
-
-A broken /tractor sits idle.
-`,
-
-"/home/outside/farm/field/tractor": `
-  [ TRACTOR ]
-   ______
-  |_____|_
-
-A sticky note reads:
-
-"What did the crop say to the other crop?
-Stop being CORNY."
-`,
-
-"/home/outside/cave": `
-  [ CAVE ]
-   █████
-  █     █
-
-Dark.
-Too dark to see anything useful.
-
-It feels unwise to continue.
-`,
-
-"/home/outside/cave/flashlight": `
-  [ CAVE LIT ]
-   █  🔦  █
-
-Light reveals paths.
-
-There is a rough /wall.
-A deep /hole.
-And a narrow /path forward.
-`,
-
-"/home/outside/cave/flashlight/path": {
-  text: `
-  [ NARROW PATH ]
-  ████⛔████
-
-A massive boulder blocks the way.
-Scratched into stone:
-
-"inspect"
-`,
-  boulder: true
-},
-
-"/home/outside/cave/flashlight/path/thewayforward": `
-  [ BEYOND ]
-   █   █
-
-The boulder is gone.
-
-A warning sign reads:
-"YOU WERE WARNED"
-
-You may /continue
-`,
-
-"/home/outside/cave/flashlight/path/thewayforward": `
-  [ END ]
-   ███
-
-You disappear into the dark.
-
-(To be continued)
-`
-};
-
-/* ---------------- RENDER ---------------- */
-function render() {
-  const app = document.getElementById('app');
-  app.innerHTML = '';
-
-  const path = getPath();
-  const loc = locations[path];
-
-  const panel = document.createElement('div');
-  panel.className = 'panel';
-
-  if (!loc) {
-    panel.classList.add('error');
-    panel.innerHTML = `
-<pre>
-┏━━━━━━━━━━━━━━┓
-┃ WRONG PATH   ┃
-┗━━━━━━━━━━━━━━┛
-
-"${path}" does not exist.
-</pre>`;
-    app.appendChild(panel);
-    return;
-  }
-
-  if (typeof loc === 'string') {
-    panel.innerHTML = `<pre>${loc}</pre>`;
-  } else {
-    panel.innerHTML = `<pre>${loc.text}</pre>`;
-
-    if (loc.boulder && !boulderRemoved) {
-      const rock = document.createElement('pre');
-      rock.id = 'boulder';
-      rock.textContent =
-`████████
-████████
-████████`;
-      panel.appendChild(rock);
-    }
-
-    if (loc.boulder && boulderRemoved) {
-      panel.innerHTML += `<pre>\nThe path forward is clear.\nYou see /thewayforward</pre>`;
-    }
-  }
-
-  if (inventory.length) {
-    panel.innerHTML += `<pre>\nInventory: ${inventory.join(', ')}</pre>`;
-  }
-
-  app.appendChild(panel);
-}
-
-/* ---------------- BOULDER INSPECT PUZZLE ---------------- */
-new MutationObserver(() => {
-  if (!document.getElementById('boulder') && getPath().endsWith('/path')) {
-    boulderRemoved = true;
-    render();
-  }
-}).observe(document.body, { childList: true, subtree: true });
-
-/* ---------------- INVENTORY CHECKS ---------------- */
-window.addEventListener('hashchange', () => {
-  if (getPath().endsWith('/flashlight') && !inventory.includes('flashlight')) {
-    location.hash = '#/home/outside/cave';
-  }
-
-  if (getPath().endsWith('/vault/CORNY') && !inventory.includes('flashlight')) {
-    inventory.push('flashlight');
-  }
-
-  render();
-});
-
-render();
-</script>
-
-</body>
-</html>
+        function handlePassword() {
+            const p = document.getElementById('passwordInput').value.trim();
+            if (p.toUpperCase() === 'ECHO42
