@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Puzzle World</title>
+<title>World</title>
 <style>
   body {
     background: black;
@@ -11,6 +11,13 @@
     padding: 20px;
     white-space: pre-wrap;
   }
+  .error {
+    color: #ff4444;
+    border: 2px solid #ff4444;
+    padding: 10px;
+    margin-top: 10px;
+    font-weight: bold;
+  }
 </style>
 </head>
 <body>
@@ -18,186 +25,127 @@
 <pre id="game"></pre>
 
 <script>
-/* ---------------- LOCATIONS ---------------- */
 const locations = {
   "/start": `
-PUZZLE WORLD
+You are standing at the edge of something unfinished.
 
-Welcome, traveler.
-
-Modify the URL path to navigate.
-Start by going to:
-
-/home
+There’s a worn trail leading toward a /home.
   `,
 
   "/home": `
-YOUR HOME
+You’re inside a quiet house.
+It feels abandoned, but not old.
 
-You wake up alone in your house.
-The silence is unsettling.
-
-Try:
-/home/outside
+Through the front door, you can head /outside.
   `,
 
   "/home/outside": `
-OUTSIDE YOUR HOME
+You step outside the house.
 
-The world is eerily quiet.
-
-Paths:
-- /home/outside/farm
-- /home/outside/cave
+To one side, open land stretches out into a /farm.
+On the other, a rocky slope leads down into a /cave.
   `,
 
   "/home/outside/farm": `
-THE FARM
+You’re standing at the edge of a farm.
 
-Crops sway in the wind.
-
-Paths:
-- /home/outside/farm/hut
-- /home/outside/farm/field
+There’s a small /hut near the fence.
+Farther out, crops grow unevenly in a wide /field.
   `,
 
   "/home/outside/farm/hut": `
-INSIDE THE HUT
+Inside the hut, dust coats everything.
 
-Dust floats through beams of light.
-
-Path:
-/home/outside/farm/hut/vault
-  `,
-
-  "/home/outside/farm/hut/vault": `
-THE VAULT
-
-A digital lock awaits a 5-letter code.
-
-Hint: Explore the field.
+Behind a loose plank, there’s a hidden /vault.
   `,
 
   "/home/outside/farm/field": `
-THE FIELD
+The field is quiet.
 
-An abandoned tractor sits nearby.
-
-Path:
-/home/outside/farm/field/tractor
+An old machine sits half-buried here.
+Up close, it looks like a /tractor.
   `,
 
   "/home/outside/farm/field/tractor": `
-THE TRACTOR
+The tractor hasn’t run in years.
 
-A note reads:
-
-"What did the crop say?
-Stop being CORNY!"
+Someone left a note wedged under the seat.
+It just says: CORNY
   `,
 
   "/home/outside/farm/hut/vault/CORNY": `
-VAULT UNLOCKED
+The vault clicks open.
 
-You obtained a FLASHLIGHT.
-
-Proceed to:
-/home/outside/cave
+Inside, you find a flashlight.
+Scratched on the inside of the door is a reminder about the /cave.
   `,
 
   "/home/outside/cave": `
-CAVE ENTRANCE
+You stand at the cave entrance.
 
-It's pitch black inside.
-
-You might need light.
+It’s too dark to see far, but with the flashlight,
+you might try /flashlight.
   `,
 
   "/home/outside/cave/flashlight": `
-CAVE (ILLUMINATED)
+The cave walls come into view.
 
-Your flashlight reveals stone walls.
-
-Path:
-/home/outside/cave/flashlight/path
+A narrow /path continues deeper inside.
   `,
 
   "/home/outside/cave/flashlight/path": `
-THE NARROW PATH
+The path is tight and uneven.
 
-A massive rock blocks the way.
-
-Something about INSPECTING it...
+There’s something beyond the rocks here,
+almost like there’s more /beyond.
   `,
 
   "/home/outside/cave/flashlight/path/beyond": `
-BEYOND THE ROCK
+The passage opens up.
 
-A hidden facility appears ahead.
-
-Path:
-/home/outside/cave/flashlight/path/beyond/terminal
+Ahead, there’s a structure that looks like a /terminal.
   `,
 
   "/home/outside/cave/flashlight/path/beyond/terminal": `
-SECURITY TERMINAL
+The terminal hums softly.
 
-Username required.
-(admin?)
-  `,
-
-  "/home/outside/cave/flashlight/path/beyond/terminal/lobby": `
-TERMINAL LOBBY
-
-You bypassed security.
-
-A computer hums quietly.
+A nearby door appears to lead to a /lobby.
+Another corridor is labeled /mainframe.
   `,
 
   "/home/outside/cave/flashlight/path/beyond/terminal/mainframe": `
-MAINFRAME ACCESS
+The mainframe door is locked.
 
-Password required.
-(Hint: HTML comments)
+A faded label reads: ECHO42
   `,
 
   "/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42": `
-MAINFRAME UNLOCKED
+The door unlocks.
 
-System access granted.
-
-Paths:
-- /files
-- /settings
+Inside, systems are still running.
+You see references to /files and /settings.
   `
 };
 
-/* ---------------- ROUTER ---------------- */
-
-// Normalize /start/... to /home/...
+/* ---------- ROUTING ---------- */
 function getPath() {
   let path = location.hash.replace("#", "") || "/start";
 
-  // If URL starts with /start/home/..., normalize to /home/...
   if (path.startsWith("/start/")) {
     path = path.replace("/start", "");
-    if (path === "") path = "/"; // just /start → /
+    if (path === "") path = "/home";
   }
 
   return path;
 }
 
-// Longest-prefix match for deep navigation
+// Longest-prefix match
 function resolveLocation(path) {
   const parts = path.split("/").filter(Boolean);
-
   for (let i = parts.length; i >= 0; i--) {
     const candidate = "/" + parts.slice(0, i).join("/");
     if (locations[candidate]) {
-      return {
-        resolved: candidate,
-        exact: candidate === path
-      };
+      return candidate;
     }
   }
   return null;
@@ -207,42 +155,28 @@ function render() {
   const path = getPath();
   const game = document.getElementById("game");
 
-  const match = resolveLocation(path);
+  const resolved = resolveLocation(path);
 
-  if (!match) {
-    game.textContent = `
-404 — PATH NOT FOUND
+  if (!resolved) {
+    game.innerHTML = `
+╔════════════════════════════════════╗
+║           WRONG PATH!              ║
+╚════════════════════════════════════╝
 
-Entered:
-${path}
+ERROR: "${path}" does not exist in this world.
 
-No valid parent route exists.
+Try exploring a valid path like /home or /home/outside.
     `;
+    game.classList.add("error");
     return;
   }
 
-  game.textContent = `
-CURRENT PATH:
-${path}
-
---------------------------------
-
-${locations[match.resolved]}
-
-${match.exact ? "" : `
-NOTE:
-This path does not exist exactly.
-Loaded nearest valid location:
-
-${match.resolved}
-`}
-`;
+  game.textContent = locations[resolved];
+  game.classList.remove("error");
 }
 
-// Listen for hash changes
 window.addEventListener("hashchange", render);
 
-// Initialize hash if empty
 if (!location.hash) location.hash = "/start";
 
 render();
