@@ -42,6 +42,7 @@
   let path = (isFileProtocol ? (location.hash.slice(1) || '/home') : (window.location.pathname + window.location.search || '/home'));
   let inventory = [];
   let rockHidden = false;
+  let rockSeen = false;
   let sqlBypassUsed = false;
   let adminAccess = false;
   let passwordFound = false;
@@ -89,7 +90,11 @@
 
     "/hole/jumpdown": `You died. What did you expect?`,
 
-    "/cave/flashlight/apath": `You venture down the narrow path, squeezing between giant rocks and stalagmites. Suddenly, a giant rock is in the way, nothing you do seems to nudge it. You see 'inspect' scrawled on the rock.\n\n[Use Inspect Element to remove the rock and reveal /thewayforward]`,
+    "/cave/flashlight/apath": {
+      title: 'A Path',
+      content: `You venture down the narrow path, squeezing between giant rocks and stalagmites. Suddenly, a giant rock is in the way, nothing you do seems to nudge it. You see 'inspect' scrawled on the rock.` ,
+      hasInspectPuzzle: true
+    },
 
     "/thewayforward": `As you blink, the rock suddenly disappears. You’re not sure how it happened or why, but you continue to venture forward. A sign reads \"YOU HAVE BEEN WARNED\"\n/continue`,
 
@@ -135,7 +140,20 @@
 
   setInterval(()=>{ const val = getCookieValue('userLevel'); adminAccess = val === 'admin'; }, 1000);
 
-  (function observeRock(){ const check = () => { if (!document.getElementById('blocking-rock')){ rockHidden = true; } }; const mo = new MutationObserver(check); mo.observe(document.body, { childList:true, subtree:true }); setTimeout(check, 200); })();
+  (function observeRock(){
+    const check = () => {
+      // only mark hidden if the rock was actually rendered previously and is now gone
+      if (rockSeen && !document.getElementById('blocking-rock') && !rockHidden){
+        rockHidden = true;
+        // Immediately update the UI when the rock element is removed in DevTools
+        try{ render(); }catch(e){ /* render may not be available during init */ }
+      }
+    };
+    const mo = new MutationObserver(check);
+    mo.observe(document.body, { childList:true, subtree:true });
+    // run initial check after a short delay in case the rock is added by render
+    setTimeout(check, 300);
+  })();
 
   function handleCodeSubmit(val){ if ((val||'').toUpperCase()==='CORNY'){ if (!inventory.includes('flashlight')) inventory.push('flashlight'); alert('Code accepted — vault unlocked. Now change the browser URL to /home/outside/farm/hut/vault/CORNY'); } else alert('Wrong code'); }
   function handlePasswordSubmit(val){ if ((val||'').toUpperCase()==='ECHO42'){ passwordFound=true; alert('Password accepted — now change the browser URL to /home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42'); } else alert('Wrong password'); }
@@ -175,13 +193,29 @@
     const pre = document.createElement('pre'); pre.textContent = contentText; if (notFound) pre.style.color = '#ff4444'; main.appendChild(pre);
 
     if (isObj && raw.hasInspectPuzzle){
-      if (!rockHidden && !document.getElementById('blocking-rock')){
-        const rock=document.createElement('div'); rock.id='blocking-rock'; rock.style.border='2px solid #374151'; rock.style.padding='18px'; rock.style.textAlign='center';
-        const ascii=document.createElement('pre'); ascii.textContent='    ___________\n   /           \\n  /   MASSIVE   \\n /    BOULDER    \\n/       🪨        \\n\\                /\n \\\______________/'; rock.appendChild(ascii);
-        const hint=document.createElement('div'); hint.textContent='Hint: Inspect element (F12) → delete #blocking-rock'; hint.style.color='#9ca3af'; rock.appendChild(hint);
-        const btn=document.createElement('button'); btn.textContent='SIMULATE REMOVE'; btn.style.marginTop='8px'; btn.addEventListener('click', ()=>{ rock.remove(); rockHidden=true; render(); }); rock.appendChild(btn);
-        main.appendChild(rock);
-      } else if (rockHidden){ const gone=document.createElement('div'); gone.innerHTML=`<pre>THE ROCK HAS VANISHED!\nPath: /home/outside/cave/flashlight/path/beyond</pre>`; const cont=document.createElement('div'); cont.textContent='Now change the browser URL to /home/outside/cave/flashlight/path/beyond to continue.'; gone.appendChild(cont); main.appendChild(gone); }
+        if (!rockHidden && !document.getElementById('blocking-rock')){
+          // container for the rock image and controls
+          const rockWrap = document.createElement('div'); rockWrap.style.textAlign='center'; rockWrap.style.padding='12px'; rockWrap.style.display='flex'; rockWrap.style.flexDirection='column'; rockWrap.style.alignItems='center';
+          // simple square-block rock (remove via Inspect Element)
+          const asciiEl = document.createElement('pre');
+          asciiEl.id = 'blocking-rock';
+          asciiEl.style.margin = '0 0 8px 0';
+          asciiEl.style.fontSize = '20px';
+          asciiEl.style.lineHeight = '20px';
+          asciiEl.style.color = '#66ffcc';
+          asciiEl.textContent = `■■■■■■■\n■■■■■■■\n■■■■■■■\n■■■■■■■\n■■■■■■■`;
+          const hint=document.createElement('div'); hint.textContent='Hint: Inspect element (F12) → delete the element with id="blocking-rock" to reveal the path.'; hint.style.color='#9ca3af'; hint.style.marginBottom='8px';
+
+          rockWrap.appendChild(asciiEl);
+          rockWrap.appendChild(hint);
+          main.appendChild(rockWrap);
+          // mark that the rock was rendered so removal is only honored after it was present
+          rockSeen = true;
+      } else if (rockHidden){
+        const gone=document.createElement('div');
+        gone.innerHTML = `<pre><strong style="color:#a3e635">THE BOULDER HAS VANISHED!</strong>\n\nThe boulder has vanished, revealing /thewayforward</pre>`;
+        main.appendChild(gone);
+      }
     }
     if (isObj && raw.requiresAuth){ const box=document.createElement('div'); box.style.marginTop='12px'; box.style.border='1px solid #16a34a'; box.style.padding='12px'; const label=document.createElement('div'); label.textContent='USERNAME (try SQLi)'; box.appendChild(label); const u=document.createElement('input'); u.placeholder='username'; u.addEventListener('keydown',(e)=>{ if (e.key==='Enter') handleSqlAuth(e.target.value); }); const login=document.createElement('button'); login.textContent='LOGIN'; login.addEventListener('click', ()=>handleSqlAuth(u.value)); box.appendChild(u); box.appendChild(login); main.appendChild(box); }
 
