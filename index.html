@@ -2,277 +2,167 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>World</title>
-
+<title>Puzzle World</title>
 <style>
-body {
-  background: black;
-  color: #00ffcc;
-  font-family: monospace;
-  padding: 20px;
-  white-space: pre-wrap;
-}
-.error {
-  color: #ff3333;
-  border: 2px solid #ff3333;
-  padding: 12px;
-  font-weight: bold;
-}
+  body {
+    background: black;
+    color: #00ffcc;
+    font-family: monospace;
+    padding: 20px;
+  }
+  .error {
+    color: red;
+  }
+  pre {
+    white-space: pre-wrap;
+    line-height: 1.2em;
+  }
+  .hidden {
+    display: none;
+  }
 </style>
 </head>
-
 <body>
 <pre id="game"></pre>
 
 <script>
-/* ======================
-   WORLD MAP
-====================== */
+const paths = {
+  "/": {
+    text: `┏━━━━━━━━━━━━━━┓
+┃  PUZZLE WORLD┃
+┗━━━━━━━━━━━━━━┛
 
-const locations = {
+You are at the start.
+There's a /home here.`,
+  },
+  "/home": {
+    text: `┏━━━━━━━━━━━━━━┓
+┃   YOUR HOME  ┃
+┗━━━━━━━━━━━━━━┛
 
-/* ---- START ---- */
-"/start": `
-      ███████╗
-      ╚══███╔╝
-        ███╔╝
-       ███╔╝
-      ███████╗
+You wake up in your home.
+There's a /outside here.`,
+  },
+  "/home/outside": {
+    text: `┏━━━━━━━━━━━━━━┓
+┃   OUTSIDE    ┃
+┗━━━━━━━━━━━━━━┛
 
-You wake to static and silence.
+You step outside.
 
-Somewhere ahead, there is a /home.
-`,
-
-/* ---- HOME ---- */
-"/home": `
-   ┌───────────┐
-   │   HOME    │
-   └───────────┘
-      |   |
-     [ ] [ ]
-
-The house hums softly.
-
-A door leads /outside.
-`,
-
-/* ---- OUTSIDE ---- */
-"/home/outside": `
-      /\        🌙
-     /  \__
-    /       \
-
-Open ground stretches out.
-
-To one side, fields lead toward a /farm.
-Beyond broken stone, darkness sinks into a /cave.
-`,
-
-/* ---- FARM SPLIT ---- */
-"/home/outside/farm": `
-   ||  ||  ||
-   ||  ||  ||
-  [==][==][==]
-
-The farm is dead quiet.
+To the left, there's a /farm.
+To the right, there's a /cave.`,
+  },
+  "/home/outside/farm": {
+    text: `┏━━━━━━━━━━━━━━┓
+┃    FARM      ┃
+┗━━━━━━━━━━━━━━┛
 
 A crooked /field stretches ahead.
-A small /barn sits to the side.
-`,
+A small /barn sits to the side.`,
+  },
+  "/home/outside/farm/field": {
+    text: `┏━━━━━━━━━━━━━━┓
+┃    FIELD     ┃
+┗━━━━━━━━━━━━━━┛
 
-"/home/outside/farm/field": `
-   🌾 🌾 🌾
-   🌾 🌾 🌾
+Golden crops sway gently.
+There's a /tractor nearby.`,
+  },
+  "/home/outside/farm/barn": {
+    text: `┏━━━━━━━━━━━━━━┓
+┃    BARN      ┃
+┗━━━━━━━━━━━━━━┛
 
-Crops rot where they stand.
+The barn is quiet.
+There's a /hut inside.`,
+  },
+  "/home/outside/farm/barn/hut": {
+    text: `┏━━━━━━━━━━━━━━┓
+┃    HUT       ┃
+┗━━━━━━━━━━━━━━┛
 
-There’s something half-buried here.
-A rusted /tractor.
-`,
+Dusty interior. Against the back wall is a vault.
+There's a /vault here.`,
+  },
+  "/home/outside/farm/barn/hut/vault": {
+    text: `┏━━━━━━━━━━━━━━┓
+┃   VAULT      ┃
+┗━━━━━━━━━━━━━━┛
 
-"/home/outside/farm/field/tractor": `
-     _______
- ___/_____\\___
- |  _   _  |
- '-(_)---(_)-'
+The vault has a digital lock.
+Enter 5-letter code to proceed.`,
+    requiresCode: true
+  },
+  "/home/outside/cave": {
+    text: `┏━━━━━━━━━━━━━━┓
+┃    CAVE      ┃
+┗━━━━━━━━━━━━━━┛
 
-Beneath the seat:
-A scrap of paper.
+The cave is pitch black.
 
-CORNY
-`,
+A massive boulder blocks your path.
+Use browser DevTools (Inspect Element) to remove it and reveal the path!`,
+    hasBoulder: true
+  },
+  "/home/outside/cave/beyond": {
+    text: `┏━━━━━━━━━━━━━━┓
+┃  BEYOND ROCK ┃
+┗━━━━━━━━━━━━━━┛
 
-"/home/outside/farm/barn": `
-     ┌───────┐
-     │  BARN │
-     └───────┘
-
-Dust hangs thick in the air.
-
-Behind loose boards, you find a /hut.
-`,
-
-"/home/outside/farm/barn/hut": `
-   ┌─────┐
-   │ ___ │
-   │ |_| │
-   └─────┘
-
-The hut feels heavier than it should.
-
-The floor hides a sealed /vault.
-`,
-
-"/home/outside/farm/barn/hut/vault": `
-   ┌───────┐
-   │ VAULT │
-   └───────┘
-
-A blank steel door.
-
-No keypad.
-No lock.
-Just expectation.
-`,
-
-"/home/outside/farm/barn/hut/vault/CORNY": `
-   ┌──────────┐
-   │ OPENED   │
-   └──────────┘
-
-The door yields.
-
-Inside:
-A flashlight.
-
-The darkness ahead no longer feels absolute.
-`,
-
-/* ---- CAVE ---- */
-"/home/outside/cave": `
-     ██████
-    ██    ██
-   ██      ██
-
-The cave swallows all light.
-
-The air is cold.
-`,
-
-"/home/outside/cave/flashlight": `
-     ██████
-    ██ 🔦  ██
-   ██      ██
-
-A narrow beam cuts through.
-
-There’s a /path deeper inside.
-`,
-
-"/home/outside/cave/flashlight/path": `
-     ██████
-    ██  🪨 ██
-   ██      ██
-
-A massive boulder blocks the way.
-
-It looks… removable.
-`,
-
-/* ---- BEYOND (HACK REQUIRED) ---- */
-"/home/outside/cave/flashlight/path/beyond": `
-      █████
-     ██   ██
-    ██     ██
-
-The boulder is gone.
-
-Beyond it stands a structure.
-A humming /terminal waits.
-`,
-
-"/home/outside/cave/flashlight/path/beyond/terminal": `
-  ┌─────────────┐
-  │  TERMINAL   │
-  └─────────────┘
-
-Text scrolls endlessly.
-
-A secured /mainframe lies behind it.
-`,
-
-"/home/outside/cave/flashlight/path/beyond/terminal/mainframe": `
-  ┌─────────────┐
-  │ MAINFRAME   │
-  └─────────────┘
-
-ACCESS DENIED
-
-This page doesn’t expect you to obey rules.
-`,
-
-"/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42": `
-  ┌─────────────┐
-  │ ACCESS OK   │
-  └─────────────┘
-
-The system opens.
-
-Reality feels thinner here.
-`
+The boulder is gone!
+A path stretches forward. There's a /facility here.`,
+  }
 };
 
-/* ======================
-   ROUTER
-====================== */
-
-function path() {
-  return location.hash.replace("#", "") || "/start";
-}
-
 function render() {
-  const p = path();
-  const game = document.getElementById("game");
+  let path = window.location.hash.replace("#", "") || "/";
+  const el = document.getElementById("game");
 
-  if (!locations[p]) {
-    game.className = "error";
-    game.textContent = `
-┏━━━━━━━━━━━━━━┓
+  if (!paths[path]) {
+    el.innerHTML = `┏━━━━━━━━━━━━━━┓
 ┃ WRONG PATH   ┃
 ┗━━━━━━━━━━━━━━┛
 
-"${p}" does not exist.
-
-The world refuses this direction.
-`;
+"${path}" does not exist.`;
+    el.classList.add("error");
     return;
   }
+  el.classList.remove("error");
 
-  game.className = "";
-  game.textContent = locations[p];
+  el.innerHTML = paths[path].text;
+
+  // Check for boulder
+  if (paths[path].hasBoulder) {
+    // Add a hidden element representing the boulder
+    const boulder = document.createElement("div");
+    boulder.id = "boulder";
+    boulder.innerHTML = `
+┏━━━━━━━━━━━━━━┓
+┃   BOULDER    ┃
+┗━━━━━━━━━━━━━━┛
+`;
+    document.body.appendChild(boulder);
+
+    // Add hidden next path
+    const hiddenPath = document.createElement("div");
+    hiddenPath.id = "hidden-path";
+    hiddenPath.className = "hidden";
+    hiddenPath.textContent = "Path revealed: /home/outside/cave/beyond";
+    document.body.appendChild(hiddenPath);
+  } else {
+    // Remove boulder elements if not needed
+    const b = document.getElementById("boulder");
+    if (b) b.remove();
+    const h = document.getElementById("hidden-path");
+    if (h) h.remove();
+  }
 }
 
+// Listen for hash change
 window.addEventListener("hashchange", render);
-if (!location.hash) location.hash = "#/start";
+
 render();
-
-/* ======================
-   INSPECT ELEMENT PUZZLE
-====================== */
-
-// To clear the boulder, player must run:
-// document.body.dataset.boulder = "cleared"
-
-Object.defineProperty(document.body.dataset, "boulder", {
-  set(v) {
-    if (v === "cleared") {
-      locations["/home/outside/cave/flashlight/path"] +=
-        "\n\nThe stone has shifted.\nThere is now a /beyond.";
-    }
-  }
-});
 </script>
-
 </body>
 </html>
