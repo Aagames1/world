@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Puzzle World</title>
+<title>World</title>
+
 <style>
 body {
   background: black;
@@ -11,133 +12,147 @@ body {
   padding: 20px;
   white-space: pre-wrap;
 }
+
 .error {
-  color: #ff4444;
-  border: 2px solid #ff4444;
-  padding: 15px;
-}
-#blocking-rock {
-  border: 2px dashed #555;
-  padding: 20px;
-  margin-top: 10px;
-  color: #777;
+  color: #ff3333;
+  border: 2px solid #ff3333;
+  padding: 12px;
+  font-weight: bold;
 }
 </style>
 </head>
-<body>
 
+<body>
 <pre id="game"></pre>
 
 <script>
-/* ========= STATE ========= */
-let inventory = [];
-let rockRemoved = false;
-let adminAccess = false;
+/* ======================
+   WORLD DATA
+====================== */
 
-/* ========= UTILS ========= */
-function getPath() {
-  let h = location.hash.replace("#", "");
-  if (!h) return "/start";
-  if (h.startsWith("/start/")) return h.replace("/start", "");
-  return h;
-}
-function getCookie(name) {
-  return document.cookie.split(";").map(c=>c.trim())
-    .find(c=>c.startsWith(name+"="))?.split("=")[1];
-}
-
-/* ========= WORLD ========= */
 const locations = {
+
 "/start": `
-┏━━━━━━━━━━━━━━━━━━┓
-┃   PUZZLE WORLD   ┃
-┗━━━━━━━━━━━━━━━━━━┛
+┏━━━━━━━━━━━━━━┓
+┃   WORLD      ┃
+┗━━━━━━━━━━━━━━┛
 
-      ██████╗
-     ██╔═══██╗
-     ██║   ██║
-     ██║   ██║
-     ╚██████╔╝
-      ╚═════╝
+The page loads quietly.
 
-You stand before a constructed reality.
+Nothing explains why you're here.
+There is only a path forward.
+
 Somewhere ahead, there is a /home.
 `,
 
 "/home": `
-┏━━━━━━━━━━┓
-┃  HOME    ┃
-┗━━━━━━━━━━┛
+┏━━━━━━━━━━━━━━┓
+┃   HOME       ┃
+┗━━━━━━━━━━━━━━┛
 
-   ┌───────┐
-   │  ___  │
-   │ |___| │
-   │       │
-   └───────┘
+A silent house.
+Still powered. Still warm.
 
-An empty house.
-The front door leads /outside.
+Outside, the door leads /outside.
 `,
 
 "/home/outside": `
-┏━━━━━━━━━━┓
-┃ OUTSIDE  ┃
-┗━━━━━━━━━━┛
+┏━━━━━━━━━━━━━━┓
+┃  OUTSIDE     ┃
+┗━━━━━━━━━━━━━━┛
 
-   🌑   🌑   🌑
+Wind brushes past abandoned ground.
 
-A silent world.
-There’s a /farm nearby.
-A dark /cave waits beyond.
+To the left, open land stretches toward a /farm.
+To the right, stone descends into a /cave.
+`,
+
+"/home/outside/farm": `
+┏━━━━━━━━━━━━━━┓
+┃   FARM       ┃
+┗━━━━━━━━━━━━━━┛
+
+Rows of dead crops stand frozen in time.
+
+A small /hut rests at the edge of the field.
+`,
+
+"/home/outside/farm/hut": `
+┏━━━━━━━━━━━━━━┓
+┃    HUT       ┃
+┗━━━━━━━━━━━━━━┛
+
+Dust. Rot. Silence.
+
+Something solid lies beneath the floor.
+It feels like a /vault.
+`,
+
+"/home/outside/farm/hut/vault": `
+┏━━━━━━━━━━━━━━┓
+┃   VAULT      ┃
+┗━━━━━━━━━━━━━━┛
+
+A metal vault blocks your way.
+
+There is no keypad.
+Just a place where confidence should be.
+`,
+
+"/home/outside/farm/hut/vault/CORNY": `
+┏━━━━━━━━━━━━━━┓
+┃ VAULT OPEN   ┃
+┗━━━━━━━━━━━━━━┛
+
+The vault opens.
+
+Inside:
+A flashlight.
+A note that simply says:
+
+"Dark paths lie."
 `,
 
 "/home/outside/cave": `
-┏━━━━━━━━━━┓
-┃  CAVE    ┃
-┗━━━━━━━━━━┛
+┏━━━━━━━━━━━━━━┓
+┃   CAVE       ┃
+┗━━━━━━━━━━━━━━┛
 
-   ████████
-   █      █
-   █      █
-   ████████
+The cave swallows sound.
 
-The cave consumes all light.
-Nothing yields yet.
+Light does not reach far in here.
 `,
 
 "/home/outside/cave/flashlight": `
-┏━━━━━━━━━━┓
-┃  CAVE    ┃
-┗━━━━━━━━━━┛
+┏━━━━━━━━━━━━━━┓
+┃   CAVE       ┃
+┗━━━━━━━━━━━━━━┛
 
-   🔦━━━━━━▶
+A beam cuts through the darkness.
 
-Light reveals a narrow /path.
+Stone walls reveal a narrow /path.
 `,
 
 "/home/outside/cave/flashlight/path": `
-┏━━━━━━━━━━┓
-┃  PATH    ┃
-┗━━━━━━━━━━┛
+┏━━━━━━━━━━━━━━┓
+┃   PATH       ┃
+┗━━━━━━━━━━━━━━┛
 
-The tunnel tightens.
+The path tightens.
 
-Something massive blocks the way.
-It feels… out of place.
+A massive boulder blocks the way forward.
+Something feels… unfinished.
 `,
 
 "/home/outside/cave/flashlight/path/beyond": `
-┏━━━━━━━━━━┓
-┃ BEYOND   ┃
-┗━━━━━━━━━━┛
+┏━━━━━━━━━━━━━━┓
+┃  CLEARING    ┃
+┗━━━━━━━━━━━━━━┛
 
-   ░░░░░░░░
-   ░ CLEAR ░
-   ░░░░░░░░
+The boulder is gone.
 
-The obstruction is gone.
-A structure hums ahead.
-There is a /terminal.
+Beyond it stands a structure.
+A dimly lit /terminal hums quietly.
 `,
 
 "/home/outside/cave/flashlight/path/beyond/terminal": `
@@ -145,26 +160,10 @@ There is a /terminal.
 ┃  TERMINAL    ┃
 ┗━━━━━━━━━━━━━━┛
 
-┌──────────────────┐
-│ SECURITY LOGIN   │
-│ Username: ______ │
-└──────────────────┘
+Lines of code flicker across the screen.
 
-Some systems trust input too much.
-`,
-
-"/home/outside/cave/flashlight/path/beyond/terminal/lobby": `
-┏━━━━━━━━━━┓
-┃  LOBBY   ┃
-┗━━━━━━━━━━┛
-
-Authentication bypassed.
-
-A workstation glows softly.
-
-<!-- Admin password: ECHO42 -->
-
-Deeper systems lie in the /mainframe.
+One path leads deeper into the system:
+A secured /mainframe.
 `,
 
 "/home/outside/cave/flashlight/path/beyond/terminal/mainframe": `
@@ -172,7 +171,10 @@ Deeper systems lie in the /mainframe.
 ┃ MAINFRAME    ┃
 ┗━━━━━━━━━━━━━━┛
 
-ADMIN PASSWORD REQUIRED
+ACCESS DENIED
+
+Something about this page feels artificial.
+Like it expects you to look closer.
 `,
 
 "/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42": `
@@ -180,117 +182,67 @@ ADMIN PASSWORD REQUIRED
 ┃ ACCESS OK    ┃
 ┗━━━━━━━━━━━━━━┛
 
-Password accepted.
+The system yields.
 
-Permissions depend on identity.
-There is an /admin panel.
-`,
-
-"/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42/admin": `
-┏━━━━━━━━━━━━━━┓
-┃ ADMIN PANEL  ┃
-┗━━━━━━━━━━━━━━┛
-
-Privileges confirmed.
-
-Final seal:
-finalchamber?key=VICTORY2025
+Files unlock.
+The world feels less solid now.
 `
 };
 
-/* ========= RENDER ========= */
+/* ======================
+   ROUTER
+====================== */
+
+function getPath() {
+  return location.hash.replace("#", "") || "/start";
+}
+
 function render() {
   const game = document.getElementById("game");
   const path = getPath();
-  const base = path.split("?")[0];
 
-  // flashlight gate
-  if (base.includes("/cave/flashlight") && !inventory.includes("flashlight")) {
-    game.innerHTML = `
-┏━━━━━━━━━━━━━━┓
-┃ ACCESS DENIED┃
-┗━━━━━━━━━━━━━━┛
-
-Darkness refuses entry.
-`;
+  if (!locations[path]) {
     game.className = "error";
-    return;
-  }
-
-  // boulder puzzle
-  if (base === "/home/outside/cave/flashlight/path" && !rockRemoved) {
-    game.innerHTML = locations[base] + `
-<div id="blocking-rock">
-████████████████████████
-█  MASSIVE OBSTRUCTION █
-████████████████████████
-
-It does not feel natural.
-</div>
-`;
-    game.className = "";
-    return;
-  }
-
-  // SQL injection via URL
-  if (base.includes("/terminal") && path.toLowerCase().includes("or")) {
-    location.hash = "/home/outside/cave/flashlight/path/beyond/terminal/lobby";
-    return;
-  }
-
-  // cookie admin
-  if (getCookie("userLevel") === "admin") adminAccess = true;
-
-  // final chamber
-  if (base.endsWith("/finalchamber")) {
-    if (path.includes("key=VICTORY2025")) {
-      game.textContent = `
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃        VICTORY           ┃
-┗━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-
-You altered the system itself.
-
-You did not play the page.
-You broke it.
-`;
-      return;
-    }
-  }
-
-  if (!locations[base]) {
-    game.innerHTML = `
+    game.textContent = `
 ┏━━━━━━━━━━━━━━┓
 ┃ WRONG PATH   ┃
 ┗━━━━━━━━━━━━━━┛
 
 "${path}" does not exist.
+
+The world rejects this direction.
 `;
-    game.className = "error";
     return;
   }
 
-  game.textContent = locations[base];
   game.className = "";
-
-  if (base === "/home/outside/farm/hut/vault/CORNY" && !inventory.includes("flashlight")) {
-    inventory.push("flashlight");
-  }
+  game.textContent = locations[path];
 }
 
-/* ========= INSPECT DETECTION ========= */
-const observer = new MutationObserver(() => {
-  if (!document.getElementById("blocking-rock") && !rockRemoved) {
-    rockRemoved = true;
-    location.hash = "/home/outside/cave/flashlight/path/beyond";
+window.addEventListener("hashchange", render);
+
+if (!location.hash) {
+  location.hash = "#/start";
+}
+
+render();
+
+/* ======================
+   INSPECT-ELEMENT PUZZLE
+====================== */
+
+// Boulder removal via console / inspect
+// Players must manually run:
+// document.body.dataset.boulder="cleared"
+
+Object.defineProperty(document.body.dataset, "boulder", {
+  set(value) {
+    if (value === "cleared") {
+      locations["/home/outside/cave/flashlight/path"] +=
+        "\n\nThe stone no longer blocks the way.\nThere is now a /beyond.";
+    }
   }
 });
-observer.observe(document.body, { childList: true, subtree: true });
-
-window.addEventListener("hashchange", render);
-if (!location.hash) location.hash = "#/start";
-render();
 </script>
-
 </body>
 </html>
