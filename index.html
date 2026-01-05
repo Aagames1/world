@@ -1,168 +1,222 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Puzzle World</title>
-<style>
-  body {
-    background: black;
-    color: #00ffcc;
-    font-family: monospace;
-    padding: 20px;
-  }
-  .error {
-    color: red;
-  }
-  pre {
-    white-space: pre-wrap;
-    line-height: 1.2em;
-  }
-  .hidden {
-    display: none;
-  }
-</style>
+  <meta charset="UTF-8">
+  <title>Puzzle World</title>
+  <style>
+    body {
+      background: black;
+      color: #00ffcc;
+      font-family: monospace;
+      padding: 20px;
+      white-space: pre-wrap;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+    .boulder {
+      border: 2px solid gray;
+      padding: 10px;
+      text-align: center;
+      margin: 10px 0;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
 </head>
 <body>
-<pre id="game"></pre>
+
+<div id="game"></div>
 
 <script>
+const inventory = [];
+let boulderRemoved = false;
+
 const paths = {
   "/": {
-    text: `┏━━━━━━━━━━━━━━┓
-┃  PUZZLE WORLD┃
-┗━━━━━━━━━━━━━━┛
+    text: `
+WELCOME TO PUZZLE WORLD
 
-You are at the start.
-There's a /home here.`,
+A mysterious puzzle adventure awaits.
+Change the URL path to /home to begin your journey.`
   },
   "/home": {
-    text: `┏━━━━━━━━━━━━━━┓
-┃   YOUR HOME  ┃
-┗━━━━━━━━━━━━━━┛
+    text: `
+You are in your empty home.
 
-You wake up in your home.
-There's a /outside here.`,
+There's a /outside you can explore.`
   },
   "/home/outside": {
-    text: `┏━━━━━━━━━━━━━━┓
-┃   OUTSIDE    ┃
-┗━━━━━━━━━━━━━━┛
-
+    text: `
 You step outside.
 
-To the left, there's a /farm.
-To the right, there's a /cave.`,
+To your left, there's a /farm.
+To your right, a dark /cave looms.`
   },
   "/home/outside/farm": {
-    text: `┏━━━━━━━━━━━━━━┓
-┃    FARM      ┃
-┗━━━━━━━━━━━━━━┛
+    text: `
+        _.-^~~~^-._
+     .-'      🌾      '-.
+  .-'      🌾     🌾       '-.
+ /    🌾        |         🌾     \\
+|              |                |
+|     FARM     |     FARM       |
+|______________|________________|
+   ||      ||        ||      ||
+   ||      ||        ||      ||
 
-A crooked /field stretches ahead.
-A small /barn sits to the side.`,
+The farm is quiet.
+
+There's a /field stretching forward,
+and a small /barn off to the side.`
   },
   "/home/outside/farm/field": {
-    text: `┏━━━━━━━━━━━━━━┓
-┃    FIELD     ┃
-┗━━━━━━━━━━━━━━┛
+    text: `
+      🌾   🌾   🌾   🌾   🌾
+   🌾   🌾   🌾   🌾   🌾   🌾
+      🌾   🌾   🌾   🌾   🌾
 
-Golden crops sway gently.
-There's a /tractor nearby.`,
+You see an abandoned /tractor.`
+  },
+  "/home/outside/farm/field/tractor": {
+    text: `
+The tractor is broken.
+
+A sticky note reads:
+
+"Stop being CORNY!"  
+
+Perhaps this is the 5-letter code for the vault.`
   },
   "/home/outside/farm/barn": {
-    text: `┏━━━━━━━━━━━━━━┓
-┃    BARN      ┃
-┗━━━━━━━━━━━━━━┛
+    text: `
+        _________
+       /_______/|
+      |   BARN | |
+      |        | |
+      |________|/
 
-The barn is quiet.
-There's a /hut inside.`,
+Inside, you see a small /hut.`
   },
-  "/home/outside/farm/barn/hut": {
-    text: `┏━━━━━━━━━━━━━━┓
-┃    HUT       ┃
-┗━━━━━━━━━━━━━━┛
+  "/home/outside/farm/hut": {
+    text: `
+The hut is mostly empty.
 
-Dusty interior. Against the back wall is a vault.
-There's a /vault here.`,
+Against the back wall is a locked /vault.`
   },
-  "/home/outside/farm/barn/hut/vault": {
-    text: `┏━━━━━━━━━━━━━━┓
-┃   VAULT      ┃
-┗━━━━━━━━━━━━━━┛
+  "/home/outside/farm/hut/vault": {
+    text: `
+  _______
+ /       \\
+|  VAULT  |
+|  LOCKED |
+ \\_______/
 
-The vault has a digital lock.
-Enter 5-letter code to proceed.`,
-    requiresCode: true
+Enter the 5-letter code using the URL:
+
+/home/outside/farm/hut/vault/CORNY`
+  },
+  "/home/outside/farm/hut/vault/CORNY": {
+    text: `
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+ACCESS GRANTED
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+
+Inside the vault you find:
+- A FLASHLIGHT [added to inventory]
+- A crumpled note: <!-- password is ECHO42 -->
+
+Now head to the /cave.`
   },
   "/home/outside/cave": {
-    text: `┏━━━━━━━━━━━━━━┓
-┃    CAVE      ┃
-┗━━━━━━━━━━━━━━┛
+    text: `
+You reach the cave entrance.
 
-The cave is pitch black.
+A massive boulder blocks the path.
 
-A massive boulder blocks your path.
-Use browser DevTools (Inspect Element) to remove it and reveal the path!`,
+Use browser DevTools (Inspect Element) to remove it.
+
+Hint: Once removed, a hidden path /beyond will appear.
+`,
+    requiresItem: "flashlight",
     hasBoulder: true
   },
   "/home/outside/cave/beyond": {
-    text: `┏━━━━━━━━━━━━━━┓
-┃  BEYOND ROCK ┃
-┗━━━━━━━━━━━━━━┛
+    text: `
+You have removed the boulder and entered the cave.
 
-The boulder is gone!
-A path stretches forward. There's a /facility here.`,
+The passage is narrow and winding. Ahead, you see a mysterious /facility.`
+  },
+  "/home/outside/cave/beyond/facility": {
+    text: `
+You arrive at the facility entrance.
+
+A locked terminal blocks the way.  
+Hint: This page is vulnerable to SQL Injection.  
+
+Try: admin' OR '1'='1 to bypass.
+`
   }
 };
 
 function render() {
   let path = window.location.hash.replace("#", "") || "/";
-  const el = document.getElementById("game");
+  const game = document.getElementById("game");
 
-  if (!paths[path]) {
-    el.innerHTML = `┏━━━━━━━━━━━━━━┓
+  // Check flashlight requirement
+  const loc = paths[path];
+  if (!loc) {
+    game.innerHTML = `<div class="error">
+┏━━━━━━━━━━━━━━┓
 ┃ WRONG PATH   ┃
 ┗━━━━━━━━━━━━━━┛
 
-"${path}" does not exist.`;
-    el.classList.add("error");
+"${path}" does not exist.
+</div>`;
     return;
   }
-  el.classList.remove("error");
-
-  el.innerHTML = paths[path].text;
-
-  // Check for boulder
-  if (paths[path].hasBoulder) {
-    // Add a hidden element representing the boulder
-    const boulder = document.createElement("div");
-    boulder.id = "boulder";
-    boulder.innerHTML = `
+  if (loc.requiresItem && !inventory.includes(loc.requiresItem)) {
+    game.innerHTML = `<div class="error">
 ┏━━━━━━━━━━━━━━┓
-┃   BOULDER    ┃
+┃ ACCESS DENIED ┃
 ┗━━━━━━━━━━━━━━┛
-`;
-    document.body.appendChild(boulder);
 
-    // Add hidden next path
-    const hiddenPath = document.createElement("div");
-    hiddenPath.id = "hidden-path";
-    hiddenPath.className = "hidden";
-    hiddenPath.textContent = "Path revealed: /home/outside/cave/beyond";
-    document.body.appendChild(hiddenPath);
-  } else {
-    // Remove boulder elements if not needed
-    const b = document.getElementById("boulder");
-    if (b) b.remove();
-    const h = document.getElementById("hidden-path");
-    if (h) h.remove();
+You need a ${loc.requiresItem.toUpperCase()} to proceed.
+</div>`;
+    return;
   }
+
+  let content = loc.text;
+
+  // Show boulder if present
+  if (loc.hasBoulder && !boulderRemoved) {
+    content += `\n\n<div class="boulder" id="boulder">
+████████████████
+█  BOULDER  █
+████████████████
+</div>`;
+  }
+
+  game.innerHTML = content;
 }
 
-// Listen for hash change
 window.addEventListener("hashchange", render);
 
+// Initial render
 render();
+
+// Handle simulated boulder removal via click (for testing)
+document.addEventListener("click", e => {
+  if (e.target.id === "boulder") {
+    boulderRemoved = true;
+    // automatically add /beyond path revealed
+    window.location.hash = "#/home/outside/cave/beyond";
+    render();
+  }
+});
 </script>
+
 </body>
 </html>
