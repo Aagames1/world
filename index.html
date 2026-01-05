@@ -12,7 +12,6 @@ body {
   padding: 20px;
   white-space: pre-wrap;
 }
-
 .error {
   color: #ff3333;
   border: 2px solid #ff3333;
@@ -27,165 +26,200 @@ body {
 
 <script>
 /* ======================
-   WORLD DATA
+   WORLD MAP
 ====================== */
 
 const locations = {
 
+/* ---- START ---- */
 "/start": `
-┏━━━━━━━━━━━━━━┓
-┃   WORLD      ┃
-┗━━━━━━━━━━━━━━┛
+      ███████╗
+      ╚══███╔╝
+        ███╔╝
+       ███╔╝
+      ███████╗
 
-The page loads quietly.
-
-Nothing explains why you're here.
-There is only a path forward.
+You wake to static and silence.
 
 Somewhere ahead, there is a /home.
 `,
 
+/* ---- HOME ---- */
 "/home": `
-┏━━━━━━━━━━━━━━┓
-┃   HOME       ┃
-┗━━━━━━━━━━━━━━┛
+   ┌───────────┐
+   │   HOME    │
+   └───────────┘
+      |   |
+     [ ] [ ]
 
-A silent house.
-Still powered. Still warm.
+The house hums softly.
 
-Outside, the door leads /outside.
+A door leads /outside.
 `,
 
+/* ---- OUTSIDE ---- */
 "/home/outside": `
-┏━━━━━━━━━━━━━━┓
-┃  OUTSIDE     ┃
-┗━━━━━━━━━━━━━━┛
+      /\        🌙
+     /  \__
+    /       \
 
-Wind brushes past abandoned ground.
+Open ground stretches out.
 
-To the left, open land stretches toward a /farm.
-To the right, stone descends into a /cave.
+To one side, fields lead toward a /farm.
+Beyond broken stone, darkness sinks into a /cave.
 `,
 
+/* ---- FARM SPLIT ---- */
 "/home/outside/farm": `
-┏━━━━━━━━━━━━━━┓
-┃   FARM       ┃
-┗━━━━━━━━━━━━━━┛
+   ||  ||  ||
+   ||  ||  ||
+  [==][==][==]
 
-Rows of dead crops stand frozen in time.
+The farm is dead quiet.
 
-A small /hut rests at the edge of the field.
+A crooked /field stretches ahead.
+A small /barn sits to the side.
 `,
 
-"/home/outside/farm/hut": `
-┏━━━━━━━━━━━━━━┓
-┃    HUT       ┃
-┗━━━━━━━━━━━━━━┛
+"/home/outside/farm/field": `
+   🌾 🌾 🌾
+   🌾 🌾 🌾
 
-Dust. Rot. Silence.
+Crops rot where they stand.
 
-Something solid lies beneath the floor.
-It feels like a /vault.
+There’s something half-buried here.
+A rusted /tractor.
 `,
 
-"/home/outside/farm/hut/vault": `
-┏━━━━━━━━━━━━━━┓
-┃   VAULT      ┃
-┗━━━━━━━━━━━━━━┛
+"/home/outside/farm/field/tractor": `
+     _______
+ ___/_____\\___
+ |  _   _  |
+ '-(_)---(_)-'
 
-A metal vault blocks your way.
+Beneath the seat:
+A scrap of paper.
 
-There is no keypad.
-Just a place where confidence should be.
+CORNY
 `,
 
-"/home/outside/farm/hut/vault/CORNY": `
-┏━━━━━━━━━━━━━━┓
-┃ VAULT OPEN   ┃
-┗━━━━━━━━━━━━━━┛
+"/home/outside/farm/barn": `
+     ┌───────┐
+     │  BARN │
+     └───────┘
 
-The vault opens.
+Dust hangs thick in the air.
+
+Behind loose boards, you find a /hut.
+`,
+
+"/home/outside/farm/barn/hut": `
+   ┌─────┐
+   │ ___ │
+   │ |_| │
+   └─────┘
+
+The hut feels heavier than it should.
+
+The floor hides a sealed /vault.
+`,
+
+"/home/outside/farm/barn/hut/vault": `
+   ┌───────┐
+   │ VAULT │
+   └───────┘
+
+A blank steel door.
+
+No keypad.
+No lock.
+Just expectation.
+`,
+
+"/home/outside/farm/barn/hut/vault/CORNY": `
+   ┌──────────┐
+   │ OPENED   │
+   └──────────┘
+
+The door yields.
 
 Inside:
 A flashlight.
-A note that simply says:
 
-"Dark paths lie."
+The darkness ahead no longer feels absolute.
 `,
 
+/* ---- CAVE ---- */
 "/home/outside/cave": `
-┏━━━━━━━━━━━━━━┓
-┃   CAVE       ┃
-┗━━━━━━━━━━━━━━┛
+     ██████
+    ██    ██
+   ██      ██
 
-The cave swallows sound.
+The cave swallows all light.
 
-Light does not reach far in here.
+The air is cold.
 `,
 
 "/home/outside/cave/flashlight": `
-┏━━━━━━━━━━━━━━┓
-┃   CAVE       ┃
-┗━━━━━━━━━━━━━━┛
+     ██████
+    ██ 🔦  ██
+   ██      ██
 
-A beam cuts through the darkness.
+A narrow beam cuts through.
 
-Stone walls reveal a narrow /path.
+There’s a /path deeper inside.
 `,
 
 "/home/outside/cave/flashlight/path": `
-┏━━━━━━━━━━━━━━┓
-┃   PATH       ┃
-┗━━━━━━━━━━━━━━┛
+     ██████
+    ██  🪨 ██
+   ██      ██
 
-The path tightens.
+A massive boulder blocks the way.
 
-A massive boulder blocks the way forward.
-Something feels… unfinished.
+It looks… removable.
 `,
 
+/* ---- BEYOND (HACK REQUIRED) ---- */
 "/home/outside/cave/flashlight/path/beyond": `
-┏━━━━━━━━━━━━━━┓
-┃  CLEARING    ┃
-┗━━━━━━━━━━━━━━┛
+      █████
+     ██   ██
+    ██     ██
 
 The boulder is gone.
 
 Beyond it stands a structure.
-A dimly lit /terminal hums quietly.
+A humming /terminal waits.
 `,
 
 "/home/outside/cave/flashlight/path/beyond/terminal": `
-┏━━━━━━━━━━━━━━┓
-┃  TERMINAL    ┃
-┗━━━━━━━━━━━━━━┛
+  ┌─────────────┐
+  │  TERMINAL   │
+  └─────────────┘
 
-Lines of code flicker across the screen.
+Text scrolls endlessly.
 
-One path leads deeper into the system:
-A secured /mainframe.
+A secured /mainframe lies behind it.
 `,
 
 "/home/outside/cave/flashlight/path/beyond/terminal/mainframe": `
-┏━━━━━━━━━━━━━━┓
-┃ MAINFRAME    ┃
-┗━━━━━━━━━━━━━━┛
+  ┌─────────────┐
+  │ MAINFRAME   │
+  └─────────────┘
 
 ACCESS DENIED
 
-Something about this page feels artificial.
-Like it expects you to look closer.
+This page doesn’t expect you to obey rules.
 `,
 
 "/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42": `
-┏━━━━━━━━━━━━━━┓
-┃ ACCESS OK    ┃
-┗━━━━━━━━━━━━━━┛
+  ┌─────────────┐
+  │ ACCESS OK   │
+  └─────────────┘
 
-The system yields.
+The system opens.
 
-Files unlock.
-The world feels less solid now.
+Reality feels thinner here.
 `
 };
 
@@ -193,56 +227,52 @@ The world feels less solid now.
    ROUTER
 ====================== */
 
-function getPath() {
+function path() {
   return location.hash.replace("#", "") || "/start";
 }
 
 function render() {
+  const p = path();
   const game = document.getElementById("game");
-  const path = getPath();
 
-  if (!locations[path]) {
+  if (!locations[p]) {
     game.className = "error";
     game.textContent = `
 ┏━━━━━━━━━━━━━━┓
 ┃ WRONG PATH   ┃
 ┗━━━━━━━━━━━━━━┛
 
-"${path}" does not exist.
+"${p}" does not exist.
 
-The world rejects this direction.
+The world refuses this direction.
 `;
     return;
   }
 
   game.className = "";
-  game.textContent = locations[path];
+  game.textContent = locations[p];
 }
 
 window.addEventListener("hashchange", render);
-
-if (!location.hash) {
-  location.hash = "#/start";
-}
-
+if (!location.hash) location.hash = "#/start";
 render();
 
 /* ======================
-   INSPECT-ELEMENT PUZZLE
+   INSPECT ELEMENT PUZZLE
 ====================== */
 
-// Boulder removal via console / inspect
-// Players must manually run:
-// document.body.dataset.boulder="cleared"
+// To clear the boulder, player must run:
+// document.body.dataset.boulder = "cleared"
 
 Object.defineProperty(document.body.dataset, "boulder", {
-  set(value) {
-    if (value === "cleared") {
+  set(v) {
+    if (v === "cleared") {
       locations["/home/outside/cave/flashlight/path"] +=
-        "\n\nThe stone no longer blocks the way.\nThere is now a /beyond.";
+        "\n\nThe stone has shifted.\nThere is now a /beyond.";
     }
   }
 });
 </script>
+
 </body>
 </html>
