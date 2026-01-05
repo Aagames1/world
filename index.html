@@ -1,18 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Puzzle World</title>
-  <style>
-    body { background-color: black; color: #39ff14; font-family: monospace; padding: 2rem; }
-    a { color: #00ffff; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    .ascii-art { color: #ffcc00; margin: 1rem 0; }
-    .hint { color: yellow; }
-    .boulder { color: gray; border: 1px solid gray; padding: 1rem; text-align: center; margin: 1rem 0; }
-    .error { color: red; border: 2px solid red; padding: 1rem; margin: 1rem 0; }
-    pre { font-family: monospace; }
-  </style>
+<meta charset="UTF-8">
+<title>Puzzle World</title>
+<style>
+body { background-color: black; color: #39ff14; font-family: monospace; padding: 2rem; }
+a { color: #00ffff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.ascii-art { color: #ffcc00; margin: 1rem 0; }
+.hint { color: yellow; }
+.boulder { color: gray; border: 1px solid gray; padding: 1rem; text-align: center; margin: 1rem 0; }
+.error { color: red; border: 2px solid red; padding: 1rem; margin: 1rem 0; }
+pre { font-family: monospace; }
+.hidden { display: none; }
+</style>
 </head>
 <body>
 
@@ -23,8 +24,9 @@
 <pre>
 Welcome, traveler.
 
-A mysterious puzzle adventure awaits. To navigate this world, click the links below:
+A mysterious puzzle adventure awaits.
 
+Click below to begin:
 - <a href="#/home">/home</a>
 </pre>
 <pre class="ascii-art">
@@ -35,174 +37,152 @@ A mysterious puzzle adventure awaits. To navigate this world, click the links be
 </div>
 
 <!-- HOME -->
-<div id="/home" style="display:none;">
+<div id="/home" class="hidden">
 <pre>
 You wake up in your home. Everyone seems gone.
 
 Step outside to explore:
-
 - <a href="#/home/outside">/home/outside</a>
 </pre>
 <pre class="ascii-art">
-╔════════════════════╗
-║       HOME         ║
-╚════════════════════╝
+╔════════════╗
+║    HOME    ║
+╚════════════╝
 </pre>
 </div>
 
 <!-- OUTSIDE -->
-<div id="/home/outside" style="display:none;">
+<div id="/home/outside" class="hidden">
 <pre>
 You step outside into a quiet world.
 
-To your left, you see a farm with fields of crops.
-To your right, a dark cave entrance looms.
+To your left, a farm with crops.
+To your right, a dark cave entrance.
 
 Navigate to:
 - <a href="#/home/outside/farm">/home/outside/farm</a>
 - <a href="#/home/outside/cave">/home/outside/cave</a>
 </pre>
 <pre class="ascii-art">
-   🌾🌾🌾🌾🌾      🏚️
-    FARM          HUT
+   🌾🌾🌾🌾🌾      🕳️
+   FARM           CAVE
 </pre>
 </div>
 
 <!-- FARM -->
-<div id="/home/outside/farm" style="display:none;">
+<div id="/home/outside/farm" class="hidden">
 <pre>
-A modest farm spreads before you. 
-
-You see a small hut with the door slightly ajar.
-Beyond it, an open field stretches into the distance.
+A modest farm spreads before you.
 
 Navigate to:
 - <a href="#/home/outside/farm/hut">/home/outside/farm/hut</a>
 - <a href="#/home/outside/farm/field">/home/outside/farm/field</a>
 </pre>
 <pre class="ascii-art">
-  🌾🌽🌾🌽🌾🌽🌾
+  🌾🌽🌾🌽🌾
    FARM FIELDS
 </pre>
 </div>
 
-<!-- FARM HUT -->
-<div id="/home/outside/farm/hut" style="display:none;">
+<!-- HUT -->
+<div id="/home/outside/farm/hut" class="hidden">
 <pre>
-The hut is mostly empty, dust floating in beams of light.
-
-Against the back wall, you notice a secure vault with a digital lock.
+Inside the hut you find a secure vault.
 
 Navigate to:
 - <a href="#/home/outside/farm/hut/vault">/home/outside/farm/hut/vault</a>
 </pre>
 <pre class="ascii-art">
-  🏚️
-  HUT INTERIOR
+ 🏚️ HUT INTERIOR
 </pre>
 </div>
 
 <!-- VAULT -->
-<div id="/home/outside/farm/hut/vault" style="display:none;">
+<div id="/home/outside/farm/hut/vault" class="hidden">
 <pre>
-A heavy metal vault stands before you.
+Vault requires a 5-letter code.
 
-It has a digital lock requiring a 5-letter code.
+Hint: Explore the farm.
 
-Hint: Check around the farm for clues.
-
-> Try entering "CORNY" at the vault.
-
-- <a href="#/home/outside/farm/hut/vault/CORNY">Enter CORNY</a>
+Try entering:
+- <a href="#/home/outside/farm/hut/vault/CORNY">CORNY</a>
 </pre>
 <pre class="ascii-art">
-╔══════════════════╗
-║   VAULT LOCKED   ║
-╚══════════════════╝
+╔════════════╗
+║   VAULT    ║
+╚════════════╝
 </pre>
 </div>
 
 <!-- VAULT UNLOCKED -->
-<div id="/home/outside/farm/hut/vault/CORNY" style="display:none;">
+<div id="/home/outside/farm/hut/vault/CORNY" class="hidden">
 <pre>
-You enter "CORNY" and the vault opens!
+Vault opens! Inside you find:
+- FLASHLIGHT
+- A note: "<!-- password is ECHO42 -->"
 
-Inside you find:
-- First aid supplies
-- A working FLASHLIGHT
-- A crumpled note with strange text
-
-Note reads: "<!-- password is ECHO42 -->"
-
-Now head to:
-- <a href="#/home/outside/cave/flashlight/path">/home/outside/cave/flashlight/path</a>
+Now go to the cave:
+- <a href="#/home/outside/cave/flashlight/path">Enter Cave</a>
 </pre>
 <pre class="ascii-art">
-╔════════════════════╗
-║  VAULT OPENED 🔓   ║
-╚════════════════════╝
+╔════════════════╗
+║  VAULT OPENED  ║
+╚════════════════╝
 </pre>
 </div>
 
 <!-- FIELD -->
-<div id="/home/outside/farm/field" style="display:none;">
+<div id="/home/outside/farm/field" class="hidden">
 <pre>
-The field is vast, full of crops of wheat and corn swaying gently.
-
-An old tractor sits abandoned near the edge of the field.
+A field with crops. An old tractor sits here.
 
 Navigate to:
 - <a href="#/home/outside/farm/field/tractor">/home/outside/farm/field/tractor</a>
 </pre>
 <pre class="ascii-art">
-🌾🌽🌾🌽🌾🌽
- FIELD
+🌾🌽🌾🌽🌾
+FIELD
 </pre>
 </div>
 
-<!-- TRACTOR CLUE -->
-<div id="/home/outside/farm/field/tractor" style="display:none;">
+<!-- TRACTOR -->
+<div id="/home/outside/farm/field/tractor" class="hidden">
 <pre>
-You check the tractor. On the bottom you find a sticky note:
+Under the tractor you find a note:
 
 ┌─────────────────────────────┐
-│ "What did the crop say to   │
-│  the other crop? CORNY!"    │
+│ "What did the crop say?     │
+│  CORNY!"                     │
 └─────────────────────────────┘
 
-This is the code for the vault.
-
-Return to:
-- <a href="#/home/outside/farm/hut/vault">/home/outside/farm/hut/vault</a>
+Return to vault:
+- <a href="#/home/outside/farm/hut/vault">Vault</a>
 </pre>
 <pre class="ascii-art">
-🚜
-OLD TRACTOR
+🚜 OLD TRACTOR
 </pre>
 </div>
 
-<!-- CAVE -->
-<div id="/home/outside/cave" style="display:none;">
+<!-- CAVE ENTRANCE -->
+<div id="/home/outside/cave" class="hidden">
 <pre>
-The cave entrance is pitch black.
+The cave is dark. You need a flashlight.
 
-Navigate forward if you have a flashlight:
-- <a href="#/home/outside/cave/flashlight/path">/home/outside/cave/flashlight/path</a>
+If you have it, enter:
+- <a href="#/home/outside/cave/flashlight/path">Enter Cave Path</a>
 </pre>
 <pre class="ascii-art">
 🕳️ DARK CAVE
 </pre>
 </div>
 
-<!-- CAVE PATH / BOULDER -->
-<div id="/home/outside/cave/flashlight/path" style="display:none;">
+<!-- CAVE PATH WITH BOULDER -->
+<div id="/home/outside/cave/flashlight/path" class="hidden">
 <pre>
-You turn on the flashlight and enter the cave.
-
-A massive boulder blocks your path.
+A massive boulder blocks the path.
 
 CHALLENGE: Inspect Element
-Use browser dev tools to remove the element below and continue.
+Remove the element below using browser dev tools to continue.
 </pre>
 <div class="boulder" id="blocking-rock">
 <pre>
@@ -213,26 +193,25 @@ Use browser dev tools to remove the element below and continue.
 \               /
  \_____________/
 </pre>
-<div class="hint">[Right-click → Inspect → Delete this element]</div>
+<div class="hint">[Right-click → Inspect → Delete]</div>
 </div>
 <pre>
-Once removed, proceed to:
-- <a href="#/home/outside/cave/flashlight/path/beyond">/home/outside/cave/flashlight/path/beyond</a>
+Then proceed:
+- <a href="#/home/outside/cave/flashlight/path/beyond">Beyond Boulder</a>
 </pre>
+
 <pre class="ascii-art">
 🪨 BOULDER BLOCKING
 </pre>
 </div>
 
 <!-- PATH BEYOND -->
-<div id="/home/outside/cave/flashlight/path/beyond" style="display:none;">
+<div id="/home/outside/cave/flashlight/path/beyond" class="hidden">
 <pre>
-The boulder is gone. You emerge into a clearing.
-
-In the distance, a mysterious facility with blinking lights.
+The boulder is gone! A clearing with a mysterious facility appears.
 
 Navigate to:
-- <a href="#/home/outside/cave/flashlight/path/beyond/terminal">/home/outside/cave/flashlight/path/beyond/terminal</a>
+- <a href="#/home/outside/cave/flashlight/path/beyond/terminal">/terminal</a>
 </pre>
 <pre class="ascii-art">
 🏢 FACILITY
@@ -240,93 +219,68 @@ Navigate to:
 </div>
 
 <!-- TERMINAL -->
-<div id="/home/outside/cave/flashlight/path/beyond/terminal" style="display:none;">
+<div id="/home/outside/cave/flashlight/path/beyond/terminal" class="hidden">
 <pre>
-A high-tech terminal building stands before you.
+Security Terminal login. Hint: SQL injection works here.
 
-A keypad reads:
-
-┌─────────────────────┐
-│ SECURITY TERMINAL    │
-│ Username: ________  │
-└─────────────────────┘
-
-Hint: SQL Injection possible! Try: admin' OR '1'='1
-
-Proceed to:
-- <a href="#/home/outside/cave/flashlight/path/beyond/terminal/lobby">Login</a>
+Try:
+- <a href="#/home/outside/cave/flashlight/path/beyond/terminal/lobby">Bypass Login</a>
 </pre>
 </div>
 
 <!-- LOBBY -->
-<div id="/home/outside/cave/flashlight/path/beyond/terminal/lobby" style="display:none;">
+<div id="/home/outside/cave/flashlight/path/beyond/terminal/lobby" class="hidden">
 <pre>
-You bypass authentication using SQL Injection.
+SQL injection successful! Inside lobby.
 
-Inside the lobby, a receptionist computer shows:
-
+HTML comment on computer shows:
 <!-- Admin password: ECHO42 -->
 
-Navigate to:
+Go to mainframe:
 - <a href="#/home/outside/cave/flashlight/path/beyond/terminal/mainframe">Mainframe</a>
 </pre>
 </div>
 
 <!-- MAINFRAME -->
-<div id="/home/outside/cave/flashlight/path/beyond/terminal/mainframe" style="display:none;">
+<div id="/home/outside/cave/flashlight/path/beyond/terminal/mainframe" class="hidden">
 <pre>
-Mainframe access panel prompts for password.
+Mainframe prompts for password.
 
-Hint: Check HTML comments or vault note for password.
+Use password from vault or HTML comment: ECHO42
 
-Navigate to:
 - <a href="#/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42">Enter ECHO42</a>
 </pre>
 </div>
 
-<!-- FINAL CHAMBER -->
-<div id="/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42" style="display:none;">
+<!-- FINAL -->
+<div id="/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42" class="hidden">
 <pre>
-Password accepted! Mainframe unlocked.
+MAINFRAME UNLOCKED! Congratulations, explorer!
 
-Options:
-- <a href="#/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42/files">System Files</a>
-- <a href="#/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42/settings">Settings</a>
-</pre>
-</div>
-
-<!-- FINAL VICTORY -->
-<div id="/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42/admin/finalchamber?key=VICTORY2025" style="display:none;">
-<pre>
-Congratulations, explorer!
-
-You've mastered the fundamentals of web security:
+You have learned:
 ✓ URL Navigation
 ✓ Puzzle Solving
 ✓ Inspect Element
 ✓ SQL Injection
 ✓ HTML Comments
-✓ Cookie Manipulation
-✓ Query Parameters
 
-Type #/start to play again
+Type #/start to restart the game.
 </pre>
 </div>
 
 <script>
-  // Simple hash-based navigation
-  function showPath() {
+function showPath() {
     const hash = window.location.hash || '#/start';
-    document.querySelectorAll('div[id]').forEach(d => d.style.display = 'none');
+    document.querySelectorAll('div[id]').forEach(d => d.classList.add('hidden'));
     const id = hash.substring(1);
     const el = document.getElementById(id);
-    if(el) el.style.display = 'block';
+    if(el) el.classList.remove('hidden');
     else {
-      document.body.innerHTML = '<div class="error">\n╔══════════════╗\n║ WRONG PATH   ║\n╚══════════════╝\n"' + id + '" does not exist.\n</div>';
+        document.body.innerHTML = '<div class="error">\n╔══════════════╗\n║ WRONG PATH   ║\n╚══════════════╝\n"' + id + '" does not exist.\n</div>';
     }
-  }
-  window.addEventListener('hashchange', showPath);
-  window.addEventListener('load', showPath);
+}
+window.addEventListener('hashchange', showPath);
+window.addEventListener('load', showPath);
 </script>
 
 </body>
