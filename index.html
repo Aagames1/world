@@ -18,10 +18,7 @@
 <pre id="game"></pre>
 
 <script>
-/*
-  LOCATIONS
-  Keys exactly match your React paths
-*/
+/* ---------------- LOCATIONS ---------------- */
 const locations = {
   "/start": `
 PUZZLE WORLD
@@ -175,13 +172,22 @@ Paths:
   `
 };
 
-/* ---------- ROUTER ---------- */
+/* ---------------- ROUTER ---------------- */
 
+// Normalize /start/... to /home/...
 function getPath() {
-  return location.hash.replace("#", "") || "/start";
+  let path = location.hash.replace("#", "") || "/start";
+
+  // If URL starts with /start/home/..., normalize to /home/...
+  if (path.startsWith("/start/")) {
+    path = path.replace("/start", "");
+    if (path === "") path = "/"; // just /start → /
+  }
+
+  return path;
 }
 
-// Longest-prefix match (React-style)
+// Longest-prefix match for deep navigation
 function resolveLocation(path) {
   const parts = path.split("/").filter(Boolean);
 
@@ -233,12 +239,11 @@ ${match.resolved}
 `;
 }
 
+// Listen for hash changes
 window.addEventListener("hashchange", render);
 
-// Initialize
-if (!location.hash) {
-  location.hash = "/start";
-}
+// Initialize hash if empty
+if (!location.hash) location.hash = "/start";
 
 render();
 </script>
