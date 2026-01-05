@@ -11,202 +11,198 @@ body {
   padding: 20px;
   white-space: pre-wrap;
 }
+input, button {
+  background: black;
+  color: #00ffcc;
+  font-family: monospace;
+  border: 1px solid #00ffcc;
+  padding: 2px 6px;
+  margin: 2px;
+}
+button:hover { background: #00ffcc; color: black; cursor: pointer; }
 .error {
   color: #ff4444;
   border: 2px solid #ff4444;
   padding: 10px;
   font-weight: bold;
 }
-.ascii {
-  color: #66ffcc;
-  margin: 5px 0;
-}
+.ascii { color: #66ffcc; }
 </style>
 </head>
 <body>
+
 <pre id="game"></pre>
 
+<input type="text" id="pathInput" placeholder="/start">
+<button id="goBtn">GO</button>
+
 <script>
-// All locations
+let inventory = [];
+let rockHidden = false;
+let sqlBypassUsed = false;
+let passwordFound = false;
+let adminAccess = false;
+
+// Locations
 const locations = {
-  "/start": `
+"/start": `
 ╔═══════════╗
 ║  PUZZLE   ║
 ║  WORLD    ║
 ╚═══════════╝
 
-You are standing at the edge of something unfinished.
+You are at the edge of something unfinished.
+There’s a path to /home.
+`,
 
-There’s a worn trail leading toward a /home.
-  `,
-
-  "/home": `
+"/home": `
 ╔═══════════╗
 ║  HOME     ║
 ╚═══════════╝
 
-You’re inside a quiet house.
-It feels abandoned, but not old.
+You wake up in your house.
+Through the front door, there’s a /outside.
+`,
 
-Through the front door, you can head /outside.
-  `,
-
-  "/home/outside": `
+"/home/outside": `
 ╔═══════════╗
 ║  OUTSIDE  ║
 ╚═══════════╝
 
-You step outside the house.
+You step outside.
+To your left, there’s a /farm.
+To your right, a dark /cave looms.
+`,
 
-To one side, open land stretches out into a /farm.
-On the other, a dark slope leads to a /cave.
-  `,
-
-  "/home/outside/farm": `
+"/home/outside/farm": `
 ╔═══════════╗
 ║  FARM     ║
 ╚═══════════╝
 
-You’re at the edge of a farm.
+You arrive at the farm.
+A small /hut is nearby.
+Crops stretch into a /field.
+`,
 
-There’s a small /hut near the fence.
-Farther out, crops grow unevenly in a wide /field.
-  `,
-
-  "/home/outside/farm/hut": `
+"/home/outside/farm/hut": `
 ╔═══════════╗
-║  HUT     ║
+║  HUT      ║
 ╚═══════════╝
 
-Inside the hut, dust coats everything.
+Inside the hut, dust floats in beams of light.
+Behind a plank, there’s a hidden /vault.
+`,
 
-Behind a loose plank, there’s a hidden /vault.
-  `,
-
-  "/home/outside/farm/hut/vault": `
+"/home/outside/farm/hut/vault": `
 ╔═══════════╗
-║  VAULT   ║
+║  VAULT    ║
 ╚═══════════╝
 
-A locked metal vault stands before you.
-It has a 5-letter code lock.
-
+A heavy metal vault with a 5-letter code lock.
 Type the code in the hash: #/home/outside/farm/hut/vault/CORNY
-  `,
+`,
 
-  "/home/outside/farm/hut/vault/CORNY": `
+"/home/outside/farm/hut/vault/CORNY": `
 ╔═══════════╗
-║  VAULT OPEN ║
+║ VAULT OPEN║
 ╚═══════════╝
 
-You enter CORNY. The vault swings open.
+You entered CORNY. The vault swings open.
+Inside, you find a FLASHLIGHT.
+A note says: "You'll need it in the /cave."
+`,
 
-Inside, you find a FLASHLIGHT. 
-
-The note inside says: "Remember the /cave, you'll need light."
-  `,
-
-  "/home/outside/farm/field": `
+"/home/outside/farm/field": `
 ╔═══════════╗
-║  FIELD   ║
+║  FIELD    ║
 ╚═══════════╝
 
-The field is quiet and full of crops.
+The crops sway in the breeze.
+Near the edge, an old /tractor sits.
+`,
 
-An old /tractor sits nearby.
-  `,
-
-  "/home/outside/farm/field/tractor": `
+"/home/outside/farm/field/tractor": `
 ╔═══════════╗
 ║  TRACTOR  ║
 ╚═══════════╝
 
-The tractor hasn’t run in years.
+The tractor is broken, but under the seat is a note: CORNY
+`,
 
-Under the seat, you find a note: CORNY
-  `,
-
-  "/home/outside/cave": `
+"/home/outside/cave": `
 ╔═══════════╗
 ║  CAVE     ║
 ╚═══════════╝
 
-The cave entrance is dark. You need a /flashlight to proceed.
-  `,
+The cave is dark.
+You need a /flashlight to enter.
+`,
 
-  "/home/outside/cave/flashlight": `
+"/home/outside/cave/flashlight": `
 ╔═══════════╗
 ║  CAVE     ║
 ╚═══════════╝
 
-You turn on your flashlight. Shadows dance across the walls.
-
+You turn on your flashlight.
 A narrow /path continues deeper inside.
-  `,
+`,
 
-  "/home/outside/cave/flashlight/path": `
+"/home/outside/cave/flashlight/path": `
 ╔═══════════╗
-║  PATH    ║
+║  PATH     ║
 ╚═══════════╝
 
 The path is tight and rocky.
+A huge boulder blocks the way.
+Something beyond: /beyond
+`,
 
-There’s a huge boulder blocking the way.
-Something seems beyond it: /beyond
-  `,
-
-  "/home/outside/cave/flashlight/path/beyond": `
+"/home/outside/cave/flashlight/path/beyond": `
 ╔═══════════╗
 ║  CLEARING ║
 ╚═══════════╝
 
 The boulder is gone.
+In the clearing, there’s a /terminal.
+`,
 
-In the clearing, there’s a structure with a /terminal.
-  `,
-
-  "/home/outside/cave/flashlight/path/beyond/terminal": `
+"/home/outside/cave/flashlight/path/beyond/terminal": `
 ╔═══════════╗
-║ TERMINAL ║
+║ TERMINAL  ║
 ╚═══════════╝
 
 The terminal hums softly.
+The main door leads to /mainframe.
+`,
 
-A nearby door leads to a /lobby.
-The other path points to /mainframe.
-  `,
-
-  "/home/outside/cave/flashlight/path/beyond/terminal/mainframe": `
+"/home/outside/cave/flashlight/path/beyond/terminal/mainframe": `
 ╔══════════════╗
 ║ MAINFRAME    ║
 ╚══════════════╝
 
-The mainframe door is locked.
-
-Hint: Password hidden somewhere as "ECHO42".
+Locked. Password hidden as "ECHO42".
 Type hash: #/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42
-  `,
+`,
 
-  "/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42": `
+"/home/outside/cave/flashlight/path/beyond/terminal/mainframe/ECHO42": `
 ╔══════════════╗
-║  ACCESS GRANTED ║
+║ ACCESS GRANTED║
 ╚══════════════╝
 
-You unlocked the mainframe!
-
+You unlocked the mainframe.
 There’s a /files section and a /settings section to explore.
-  `,
+`,
 
-  "/restart": `
+"/restart": `
 ╔═══════════╗
 ║ RESTART   ║
 ╚═══════════╝
 
 Game reset. Go to #/start to play again.
-  `
+`
 };
 
-// Get the hash path
+// Get current path
 function getPath() {
   let path = location.hash.replace("#", "") || "/start";
   // allow #/start/home
@@ -236,7 +232,7 @@ function render() {
 ║         WRONG PATH!            ║
 ╚════════════════════════════════╝
 
-The path "${path}" does not exist in this world.
+The path "${path}" does not exist.
 
 Try valid paths like /home or /home/outside/farm.
     `;
@@ -244,14 +240,42 @@ Try valid paths like /home or /home/outside/farm.
     return;
   }
 
+  // Flashlight requirement
+  if (resolved.includes("/cave/flashlight") && !inventory.includes("flashlight")) {
+    game.innerHTML = `
+╔════════════════════╗
+║  ACCESS DENIED     ║
+╚════════════════════╝
+
+You need a FLASHLIGHT to enter this cave!
+Return to /home/outside/farm/hut to find one.
+    `;
+    game.classList.add("error");
+    return;
+  }
+
   game.textContent = locations[resolved];
   game.classList.remove("error");
+
+  // Auto-give flashlight if visiting vault
+  if (resolved === "/home/outside/farm/hut/vault/CORNY" && !inventory.includes("flashlight")) {
+    inventory.push("flashlight");
+  }
 }
+
+// Handle hash input
+document.getElementById("goBtn").addEventListener("click", () => {
+  let val = document.getElementById("pathInput").value.trim();
+  if (!val.startsWith("/")) val = "/" + val;
+  location.hash = val;
+});
+document.getElementById("pathInput").addEventListener("keypress", (e) => {
+  if (e.key === "Enter") document.getElementById("goBtn").click();
+});
 
 window.addEventListener("hashchange", render);
 if (!location.hash) location.hash = "#/start";
 render();
 </script>
-
 </body>
 </html>
