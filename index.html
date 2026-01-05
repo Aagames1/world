@@ -1,132 +1,192 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Puzzle World</title>
-<style>
-:root {
-  --bg: #000;
-  --text: #16a34a;
-  --muted: #065f46;
-  --accent: #06b6d4;
-}
-html,body { height: 100%; }
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-}
-.container { max-width: 720px; width: 100%; }
-.panel { border: 1px solid var(--text); padding: 20px; box-sizing: border-box; }
-.title { color: var(--accent); margin-bottom: 12px; }
-pre { white-space: pre-wrap; margin: 0 0 12px 0; }
-.inventory { margin-top: 12px; color: #a7f3d0; font-size: 12px; }
-</style>
+  <meta charset="UTF-8" />
+  <title>Puzzle World</title>
+
+  <style>
+    :root {
+      --bg: #000;
+      --text: #16a34a;
+      --muted: #065f46;
+      --accent: #06b6d4;
+    }
+    html,body { height: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .container { max-width: 720px; width: 100%; }
+    .panel { border: 1px solid var(--text); padding: 20px; box-sizing: border-box; }
+    .title { color: var(--accent); margin-bottom: 12px; }
+    pre { white-space: pre-wrap; margin: 0 0 12px 0; }
+    .inventory { margin-top: 12px; color: #a7f3d0; font-size: 12px; }
+  </style>
 </head>
 <body>
+
 <div id="root" class="container"></div>
+
 <script>
 (function(){
-  const root = document.getElementById('root');
+  const isFileProtocol = location.protocol === 'file:';
+  if (isFileProtocol && !location.hash) location.hash = '#/home';
+  let path = (isFileProtocol ? (location.hash.slice(1) || '/home') : (window.location.pathname + window.location.search || '/home'));
   let inventory = [];
   let rockHidden = false;
   let rockSeen = false;
 
-  // Detect the GitHub Pages base path automatically
-  const basePath = location.pathname.replace(/index\.html$/, '');
-  const isFileProtocol = location.protocol === 'file:';
+  const root = document.getElementById('root');
 
-  // Use hash if file protocol, otherwise normalize path relative to basePath
-  function getFullPath(){
-    if(isFileProtocol) return location.hash.slice(1) || '/home';
-    let path = location.pathname + location.search + location.hash;
-    // strip basePath so /world/ becomes /
-    if(basePath !== '/') path = path.replace(basePath, '/');
-    return path || '/home';
-  }
-
-  function normalizePath(p){ if(!p.startsWith('/')) p='/' + p; return p; }
+  function getFullPath(){ return isFileProtocol ? (location.hash.slice(1) || '/home') : (window.location.pathname + window.location.search || '/home'); }
+  function normalizePath(p){ if (!p.startsWith('/')) p = '/' + p; return p; }
 
   const locations = {
-    "/home": `You wake up in your home. Head /outside.`,
-    "/home/outside": `To your left, a /farm, to your right, a /cave.`,
-    "/home/outside/cave": `It’s very dark. You could try using a /flashlight.`,
-    "/home/outside/farm": `You see a /hut and an open /field.`,
-    "/flashlight": `You acquired /FLASHLIGHT. This could be useful somewhere else.`,
-    "/cave/flashlight": `You turn on the flashlight. There’s a /wall, a /hole, and a /path.`,
-    "/cave/flashlight/path": `You see a giant boulder. Hint: Inspect element (F12) → delete #blocking-rock to proceed.`,
-    "/thewayforward": `The boulder has vanished. You may /continue.`,
-    "/continue": `You continue forward and discover a /terminal requiring SQLi or cookie tricks.`,
-    "/restart": `Game reset. Go to #/home to play again.`
+    "/start": `Start:\nwebsitenamepuzzle.com\nStart the puzzle > .com/home\nIntroduce how to explore (add /[location] to the URL)`,
+
+    "/home": `You wake up in your home, only to realize that everyone has seemingly disappeared, and you’re the only one in this seemingly empty world. Head /outside`,
+
+    "/home/outside": `To your left, a /farm, to your right, a /cave`,
+
+    "/home/outside/farm": `You see a /hut with the door open, and an open /field`,
+    "/home/outside/farm/hut": `Nothing is inside, except a secure /vault.`,
+    "/home/outside/farm/hut/vault": `A 5 letter lock is protecting it.`,
+    "/home/outside/farm/hut/vault/CORNY": `You entered the code, and the vault opened. Inside is some first aid equipment.`,
+
+    "/home/outside/farm/field": `The field is vast, full of crops of wheat and corn. A /tractor is nearby`,
+    "/home/outside/farm/field/tractor": `You tried running the tractor, until you realize the engine is missing. You look around and find a sticky note.\n"Stop being CORNY!"`,
+
+    "/home/outside/cave": `It’s very dark, you don’t think it’s the best idea to explore it.`,
+    "/home/outside/cave/flashlight": `You turned the flashlight on and ventured into the cave. A sign reads "DO NOT TRESPASS". There’s a /wall to your left, a /hole in the middle, and /apath to your right.`,
+
+    "/home/outside/cave/flashlight/wall": `It’s /adeadend`,
+    "/home/outside/cave/flashlight/wall/adeadend": `You tried pushing against the wall, but nothing happened.`,
+
+    "/home/outside/cave/flashlight/hole": `You look down the hole, shining your flashlight. You try dropping some pebbles, but hear nothing. You could go back, or /jumpdown`,
+    "/home/outside/cave/flashlight/hole/jumpdown": `You died. What did you expect?`,
+
+    "/home/outside/cave/flashlight/apath": {
+      title: 'A Path',
+      content: `You venture down the narrow path, squeezing between giant rocks and stalagmites. Suddenly, a giant rock is in the way, nothing you do seems to nudge it. You see 'inspect' scrawled on the rock.`,
+      hasInspectPuzzle: true
+    },
+
+    // Nested path: now requires adding /thewayforward
+    "/home/outside/cave/flashlight/path/thewayforward": `As you blink, the rock suddenly disappears. You continue forward. A sign reads "YOU HAVE BEEN WARNED"\n/continue`,
+
+    "/continue": `You continue forward and...`,
+
+    "/restart": `Game reset. Go to #/start to play again.`
   };
 
+  function navigateTo(newPath){ newPath = normalizePath(newPath); if (isFileProtocol){ location.hash = newPath; } else { try{ history.replaceState({},'',newPath); }catch(e){} } path = newPath; render(); }
+
   function resolvePath(p){
-    if(locations[p]) return {found:true, key:p, loc:locations[p]};
-    return {found:false};
+    if (!p) return {found:false};
+    if (locations[p]) return { found:true, key:p, loc:locations[p] };
+    const lower = p.toLowerCase();
+    for (const k of Object.keys(locations)){
+      if (k.toLowerCase() === lower) return { found:true, key:k, loc:locations[k] };
+    }
+    let best = null;
+    for (const k of Object.keys(locations)){
+      if (lower.endsWith(k.toLowerCase())){
+        if (!best || k.length > best.key.length) best = { key:k, loc:locations[k] };
+      }
+    }
+    if (best) return { found:true, key:best.key, loc:best.loc };
+    const parts = p.split('/').filter(Boolean);
+    for (let i = parts.length; i >= 0; i--){
+      const cand = '/' + parts.slice(0,i).join('/');
+      if (locations[cand]) return { found:true, key:cand, loc:locations[cand] };
+    }
+    return { found:false };
   }
 
-  function navigateTo(newPath){
-    newPath = normalizePath(newPath);
-    if(isFileProtocol){ location.hash = newPath; }
-    else{ history.replaceState({},'', basePath + newPath); }
-    render();
+  path = getFullPath() || '/home';
+  if (isFileProtocol) {
+    window.addEventListener('hashchange', ()=>{ path = getFullPath(); render(); });
+  } else {
+    window.addEventListener('popstate', ()=>{ path = getFullPath(); render(); });
   }
+
+  (function observeRock(){
+    const check = () => {
+      if (rockSeen && !document.getElementById('blocking-rock') && !rockHidden){
+        rockHidden = true;
+        alert('"/FLASHLIGHT obtained. This could be useful somewhere else"');
+        render();
+      }
+    };
+    const mo = new MutationObserver(check);
+    mo.observe(document.body, { childList:true, subtree:true });
+    setTimeout(check, 300);
+  })();
 
   function render(){
-    const path = getFullPath();
     root.innerHTML = '';
-
     const header = document.createElement('div'); header.className='panel';
-    const info = document.createElement('div'); info.style.color='#9ca3af'; info.style.marginBottom='8px';
-    info.textContent='Change the browser address bar path (e.g. /home) and press Enter.';
-    header.appendChild(info);
-
-    const cur = document.createElement('div'); cur.textContent='Current path: ' + path; header.appendChild(cur);
-    root.appendChild(header);
+    const info = document.createElement('div'); info.style.marginBottom='8px'; info.style.color='#9ca3af'; info.textContent = 'Change the browser address bar path (e.g. /home) and press Enter to navigate.'; header.appendChild(info);
+    const cur=document.createElement('div'); cur.textContent = 'Current path: ' + path; header.appendChild(cur); root.appendChild(header);
 
     const res = resolvePath(path);
     const notFound = !res.found;
+    const raw = res.loc;
+
+    let titleText = '';
+    let contentText = '';
+    let isObj = typeof raw === 'object' && raw !== null && !Array.isArray(raw);
+    if (typeof raw === 'string'){
+      titleText = res.key ? (res.key.split('/').filter(Boolean).pop() || 'Home') : (path.split('/').filter(Boolean).pop() || 'Home');
+      contentText = raw;
+    } else if (isObj){
+      titleText = raw.title || (res.key ? (res.key.split('/').filter(Boolean).pop() || 'Home') : (path.split('/').filter(Boolean).pop() || 'Home'));
+      contentText = typeof raw.content === 'function' ? raw.content(path) : raw.content;
+    } else if (notFound){
+      titleText = '404';
+      contentText = `Path not found: ${path}`;
+    }
 
     const main = document.createElement('div'); main.className='panel';
-    if(notFound){ main.style.borderColor='#ff4444'; }
+    if (notFound) main.style.borderColor = '#ff4444';
+    const title = document.createElement('div'); title.className='title'; title.textContent='> '+titleText; main.appendChild(title);
+    const pre = document.createElement('pre'); pre.textContent = contentText; if (notFound) pre.style.color = '#ff4444'; main.appendChild(pre);
 
-    const title = document.createElement('div'); title.className='title';
-    title.textContent='> ' + (notFound ? '404' : res.key.split('/').filter(Boolean).pop() || 'Home');
-    main.appendChild(title);
-
-    const pre = document.createElement('pre');
-    pre.textContent = notFound ? `Path not found: ${path}` : res.loc;
-    if(notFound) pre.style.color='#ff4444';
-    main.appendChild(pre);
-
-    // Boulder puzzle
-    if(path === '/cave/flashlight/path' && !rockHidden){
-      const rock = document.createElement('pre');
-      rock.id='blocking-rock';
-      rock.textContent='■■■■■■■\n■■■■■■■\n■■■■■■■\n■■■■■■■\n■■■■■■■';
-      rock.style.color='#66ffcc';
-      main.appendChild(rock);
-      rockSeen = true;
-    } else if(path === '/cave/flashlight/path' && rockHidden){
-      const gone = document.createElement('pre');
-      gone.innerHTML='<strong style="color:#a3e635">THE BOULDER HAS VANISHED!</strong>\n\nThe boulder has vanished, revealing /thewayforward';
-      main.appendChild(gone);
+    if (isObj && raw.hasInspectPuzzle){
+      if (!rockHidden && !document.getElementById('blocking-rock')){
+        const rockWrap = document.createElement('div'); rockWrap.style.textAlign='center'; rockWrap.style.padding='12px'; rockWrap.style.display='flex'; rockWrap.style.flexDirection='column'; rockWrap.style.alignItems='center';
+        const asciiEl = document.createElement('pre');
+        asciiEl.id = 'blocking-rock';
+        asciiEl.style.margin = '0 0 8px 0';
+        asciiEl.style.fontSize = '20px';
+        asciiEl.style.lineHeight = '20px';
+        asciiEl.style.color = '#66ffcc';
+        asciiEl.textContent = `■■■■■■■\n■■■■■■■\n■■■■■■■\n■■■■■■■\n■■■■■■■`;
+        const hint=document.createElement('div'); hint.textContent='Hint: Inspect element (F12) → delete the element with id="blocking-rock" to reveal the path.'; hint.style.color='#9ca3af'; hint.style.marginBottom='8px';
+        rockWrap.appendChild(asciiEl);
+        rockWrap.appendChild(hint);
+        main.appendChild(rockWrap);
+        rockSeen = true;
+      } else if (rockHidden){
+        const gone=document.createElement('div');
+        gone.innerHTML = `<pre><strong style="color:#a3e635">THE BOULDER HAS VANISHED!</strong>\n\nThe boulder has vanished, revealing /thewayforward</pre>`;
+        main.appendChild(gone);
+      }
     }
 
     root.appendChild(main);
   }
 
-  // Observe boulder removal
-  new MutationObserver(()=>{ if(rockSeen && !document.getElementById('blocking-rock')) rockHidden=true; render(); }).observe(document.body,{childList:true,subtree:true});
-
-  window.addEventListener(isFileProtocol ? 'hashchange' : 'popstate', render);
   render();
+
 })();
 </script>
+
 </body>
 </html>
