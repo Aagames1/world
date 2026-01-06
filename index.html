@@ -20,9 +20,6 @@ pre {
   white-space: pre-wrap;
   margin: 0;
 }
-.dim {
-  color: #4ade80;
-}
 </style>
 </head>
 <body>
@@ -32,20 +29,21 @@ pre {
 <script>
 /* ---------- ROUTING ---------- */
 if (!location.hash) location.hash = "#/home";
-const path = () => location.hash.replace("#","");
+const path = () => location.hash.replace("#","") || "/home";
 
-/* ---------- GAME STATE ---------- */
+/* ---------- STATE ---------- */
+let inventory = [];
 let boulderRemoved = false;
 
 /* ---------- LOCATIONS ---------- */
 const locations = {
 
 "/home": `
-[ HOME ]
- _______
-|       |
-|  BED  |
-|_______|
+  [ HOME ]
+   _______
+  |       |
+  |  BED  |
+  |_______|
 
 You wake up alone.
 
@@ -53,90 +51,84 @@ A way leads /outside
 `,
 
 "/home/outside": `
-[ OUTSIDE ]
- ☁ ☁   🌲 🌲
+  [ OUTSIDE ]
+   🌲   🌲
 
-The air is cold.
+Paths split.
 
-Paths:
-- /farm
-- /cave
+There's a quiet /farm.
+A darker /cave beyond.
 `,
 
 "/home/outside/farm": `
-[ FARM ]
- 🌾🌾🌾
- 🌾🌾🌾
+  [ FARM ]
+   🌾🌾🌾
 
-There's a /hut.
-An open /field.
+A small /hut sits nearby.
+An open /field stretches out.
 `,
 
 "/home/outside/farm/hut": `
-[ HUT ]
- _____
-|_____|
+  [ HUT ]
+   _____
+  |_____| 
 
-A locked /vault sits inside.
+A locked /vault rests here.
 `,
 
 "/home/outside/farm/hut/vault": `
-[ VAULT ]
-███████
+  [ VAULT ]
+  ███████
 
-5-letter password required.
-Try /vault/_____
+A 5-letter password:
+/vault/?????
 `,
 
 "/home/outside/farm/hut/vault/CORNY": `
-[ VAULT OPEN ]
+  [ VAULT OPEN ]
+  █ ▢ ▢ █
 
-You find supplies.
-A note reads:
+Inside:
+A note labeled "/flashlight"
 
-"/flashlight"
-
-That might matter elsewhere.
+This could be useful somewhere else.
 `,
 
 "/home/outside/farm/field": `
-[ FIELD ]
- 🌽🌽🌽
+  [ FIELD ]
+   🌽🌽🌽
 
-A rusted /tractor rests here.
+A broken /tractor sits idle.
 `,
 
 "/home/outside/farm/field/tractor": `
-[ TRACTOR ]
-
-"What did the crop say?
+"What did the crop say to the other crop?
 Stop being CORNY."
 `,
 
 "/home/outside/cave": `
-[ CAVE ]
- █████
+  [ CAVE ]
+   █████
 
-Too dark to proceed.
-Something tells you light matters,
-but nothing explicitly says so.
+Dark.
+Unwise to continue.
 `,
 
 "/home/outside/cave/flashlight": `
-[ CAVE LIT ]
- █ 🔦 █
+  [ CAVE LIT ]
+   █ 🔦 █
 
 Light reveals:
-- /path
+A narrow /path forward.
 `,
 
 "/home/outside/cave/flashlight/path": {
   text: `
-[ NARROW PATH ]
- ████⛔████
+  [ PATH ]
+  ███⛔███
 
-A boulder blocks the way.
-Carved faintly:
+A massive boulder blocks the way.
+Scratched into the stone:
 
 "inspect"
 `,
@@ -144,50 +136,36 @@ Carved faintly:
 },
 
 "/home/outside/cave/flashlight/path/thewayforward": `
-[ SECURITY GATE ]
- █ █ █
+  [ BEYOND ]
+   █   █
 
-ACCESS DENIED
+A terminal hums faintly.
+
+/terminal
+`,
+
+"/home/outside/cave/flashlight/path/thewayforward/terminal": `
+  [ TERMINAL ]
+
+LOGIN REQUIRED
+
+Username:
+`,
+"/admin": `
+  ACCESS DENIED
 
 Session data appears client-controlled.
-
-Hint:
-"Privileges are stored locally."
-`,
-
-"/home/outside/cave/flashlight/path/thewayforward/admin": `
-[ TERMINAL ]
- =================
- USER: admin
- =================
-
-Database locked.
-
-Query required.
-Try appending something...
-`,
-
-"/home/outside/cave/flashlight/path/thewayforward/admin?sql=OR1=1": `
-[ DATABASE UNLOCKED ]
-
-All restrictions bypassed.
-
-You see one final path:
- /end
 `,
 
 "/end": `
-[ TRANSMISSION ]
+  [ EXIT ]
+   ███
 
-You were never meant to follow paths.
-You were meant to question them.
+You reach the core.
 
-Systems fail.
-Curiosity persists.
+The system shuts down.
 
-Thanks for playing.
-
-— END —
+Thank you for playing.
 `
 };
 
@@ -195,19 +173,19 @@ Thanks for playing.
 function render() {
   const app = document.getElementById("app");
   app.innerHTML = "";
+  const p = path();
+  const loc = locations[p];
 
-  const loc = locations[path()];
   const panel = document.createElement("div");
   panel.className = "panel";
 
   if (!loc) {
-    panel.innerHTML = `
-<pre>
+    panel.innerHTML = `<pre>
 ┏━━━━━━━━━━━━━━┓
 ┃ WRONG PATH   ┃
 ┗━━━━━━━━━━━━━━┛
 
-"${path()}" does not exist.
+"${p}" does not exist.
 </pre>`;
     app.appendChild(panel);
     return;
@@ -220,42 +198,62 @@ function render() {
     if (loc.boulder && !boulderRemoved) {
       const rock = document.createElement("pre");
       rock.id = "boulder";
-      rock.textContent = `
-████████
+      rock.textContent =
+`████████
 ████████
 ████████`;
       panel.appendChild(rock);
-    }
-    if (loc.boulder && boulderRemoved) {
-      panel.innerHTML += `
-<pre class="dim">
-The way is open.
-You see /thewayforward
-</pre>`;
     }
   }
 
   app.appendChild(panel);
 }
 
-/* ---------- BOULDER PUZZLE ---------- */
+/* ---------- BOULDER INSPECT PUZZLE ---------- */
 new MutationObserver(() => {
-  if (!document.getElementById("boulder") && path().endsWith("/path")) {
+  if (
+    !document.getElementById("boulder") &&
+    path().endsWith("/path") &&
+    !boulderRemoved
+  ) {
     boulderRemoved = true;
-    render();
-  }
-}).observe(document.body, { childList:true, subtree:true });
+    const note = document.createElement("pre");
+    note.textContent = `
+The obstruction is gone.
 
-/* ---------- COOKIE GATE ---------- */
+Faint text appears:
+/thewayforward
+`;
+    document.querySelector(".panel").appendChild(note);
+  }
+}).observe(document.body, { childList: true, subtree: true });
+
+/* ---------- HASH CHANGE LOGIC ---------- */
 window.addEventListener("hashchange", () => {
-  if (path().endsWith("/thewayforward")) {
-    if (!document.cookie.includes("user=admin")) {
-      // stay, but locked
+
+  /* flashlight gate */
+  if (path().includes("/cave/flashlight") && !inventory.includes("flashlight")) {
+    location.hash = "#/home/outside/cave";
+  }
+
+  /* vault reward */
+  if (path().endsWith("/vault/CORNY") && !inventory.includes("flashlight")) {
+    inventory.push("flashlight");
+  }
+
+  /* SQL injection terminal */
+  if (path().endsWith("/terminal")) {
+    const input = prompt("username:");
+    if (input && /('|--|OR 1=1)/i.test(input)) {
+      location.hash = "#/admin";
     }
   }
 
-  if (path().includes("/admin") && !document.cookie.includes("user=admin")) {
-    location.hash = "#/home/outside/cave/flashlight/path/thewayforward";
+  /* cookie puzzle */
+  if (path() === "/admin") {
+    if (document.cookie.includes("user=admin")) {
+      location.hash = "#/end";
+    }
   }
 
   render();
