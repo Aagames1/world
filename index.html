@@ -15,13 +15,21 @@ body {
 .panel {
   border: 1px solid #16a34a;
   padding: 16px;
-}
-.notice {
-  color: #a7f3d0;
+  max-width: 800px;
 }
 pre {
   white-space: pre-wrap;
   margin: 0;
+}
+input, button {
+  background: black;
+  color: #16a34a;
+  border: 1px solid #16a34a;
+  font-family: monospace;
+  padding: 4px;
+}
+button {
+  cursor: pointer;
 }
 </style>
 </head>
@@ -30,260 +38,268 @@ pre {
 <div id="app"></div>
 
 <script>
-/* ---------- ROUTING ---------- */
-if (!location.hash) location.hash = "#/home";
-const path = () => location.hash.slice(1) || "/home";
+/* ---------------- ROUTING ---------------- */
+if (!location.hash) location.hash = '#/home';
+function path() { return location.hash.slice(1) || '/home'; }
 
-/* ---------- GAME STATE (minimal) ---------- */
+/* ---------------- STATE ---------------- */
 let boulderCleared = false;
 
-/* ---------- LOCATIONS ---------- */
+/* ---------------- LOCATIONS ---------------- */
 const locations = {
 
 "/home": `
-   [ HOME ]
-   _______
-  |       |
-  |  BED  |
-  |_______|
+[ HOME ]
+ _______
+|       |
+|  BED  |
+|_______|
 
 You wake up alone.
-No sound. No movement.
 
-A path leads /outside
+Paths lead /outside
 `,
 
 "/home/outside": `
-   [ OUTSIDE ]
-     ☁   ☁
-   🌲       🌲
+[ OUTSIDE ]
+  🌲     🌲
 
-Cold air.
-The world feels abandoned.
+Fresh air.
 
-There is a /farm nearby.
-A darker trail leads into a /cave.
+To the left: /farm
+To the right: /cave
 `,
 
 "/home/outside/farm": `
-   [ FARM ]
-   🌾🌾🌾
-   🌾🌾🌾
+[ FARM ]
+ 🌾🌾🌾
 
-The crops still grow.
-
-You notice a /hut.
-Beyond it, an open /field.
+There is a /hut
+An open /field
 `,
 
 "/home/outside/farm/field": `
-   [ FIELD ]
-   🌽🌽🌽
+[ FIELD ]
+ 🌽🌽🌽
 
-A rusted /tractor sits quietly.
+A broken /tractor
 `,
 
 "/home/outside/farm/field/tractor": `
-   [ TRACTOR ]
+[ TRACTOR ]
 
-A note stuck under the seat reads:
+A sticky note reads:
 
 "What did the crop say to the other crop?
 Stop being CORNY."
 `,
 
 "/home/outside/farm/hut": `
-   [ HUT ]
-    _____
-   |_____|
+[ HUT ]
 
-Dust coats the floor.
-
-A sealed /vault rests in the corner.
+Dusty.
+A locked /vault
 `,
 
 "/home/outside/farm/hut/vault": `
-   [ VAULT ]
-   ███████
+[ VAULT ]
 
 A 5-letter lock.
+/vault/?????
 `,
 
 "/home/outside/farm/hut/vault/CORNY": `
-   [ VAULT OPEN ]
+[ VAULT OPEN ]
 
-Inside:
-medical supplies
-a small flashlight
+Inside is a note:
 
-"/FLASHLIGHT obtained.
-This could be useful somewhere else."
+"/FLASHLIGHT"
+
+This could be useful somewhere else.
 `,
 
 "/home/outside/cave": `
-   [ CAVE ]
-   █████
+[ CAVE ]
 
-Darkness swallows the entrance.
-
-You feel like going further might require
-something you don't yet have.
+Too dark to see.
 `,
 
 "/home/outside/cave/flashlight": `
-   [ CAVE — LIT ]
-   █  🔦  █
+[ CAVE LIT ]
 
-Light reveals branching tunnels.
+With light, paths appear.
 
-There's a /wall here,
-a deep /hole,
-and a narrow /path ahead.
+A /wall
+A /hole
+A narrow /path
 `,
 
 "/home/outside/cave/flashlight/path": {
   text: `
-   [ NARROW PATH ]
-   ███⛔████
+[ NARROW PATH ]
 
 A massive boulder blocks the way.
+Scratched into stone:
 
-Scratched faintly into the stone:
 "inspect"
 `,
   boulder: true
 },
 
 "/home/outside/cave/flashlight/path/thewayforward": `
-   [ BEYOND ]
-    █   █
+[ BEYOND ]
 
 The boulder is gone.
 
-A warning sign reads:
+A sign reads:
 "YOU WERE WARNED"
 
 You may /continue
 `,
 
-"/home/outside/cave/flashlight/path/thewayforward/continue": `
-   [ TERMINAL ]
-   ┌──────────┐
-   │ ACCESS   │
-   └──────────┘
+"/home/outside/cave/flashlight/path/thewayforward/continue": {
+  text: `
+[ TERMINAL ]
+ ┌──────────┐
+ │ ACCESS   │
+ └──────────┘
 
-A dusty terminal hums to life.
+A dusty terminal hums.
 
 > LOGIN REQUIRED
 `,
+  terminal: true
+},
 
-"/home/outside/cave/flashlight/path/thewayforward/continue/admin": `
-ACCESS DENIED
+"/home/outside/cave/flashlight/path/thewayforward/continue/root": {
+  text: `
+[ ROOT ACCESS ]
 
-Session data appears client-controlled.
+SYSTEM UNLOCKED.
+
+A final door stands ahead.
 `,
+  cookieGate: true
+},
 
-"/home/outside/cave/flashlight/path/thewayforward/continue/root": `
-   [ CORE ]
+"/home/outside/cave/flashlight/path/thewayforward/continue/root/end": `
+[ END ]
 
-The system unlocks.
+You step forward.
 
-Logs scroll endlessly.
-The world was automated.
-Then abandoned.
+The world flickers.
+The system shuts down.
 
-You were not meant to find this.
+You were never meant to escape —
+only to understand.
 
-But you did.
-
-> END
+Congratulations.
 `
 };
 
-/* ---------- RENDER ---------- */
+/* ---------------- RENDER ---------------- */
 function render() {
-  const app = document.getElementById("app");
-  app.innerHTML = "";
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+  const p = path();
+  const loc = locations[p];
 
-  const panel = document.createElement("div");
-  panel.className = "panel";
-
-  const loc = locations[path()];
+  const panel = document.createElement('div');
+  panel.className = 'panel';
 
   if (!loc) {
-    panel.innerHTML = `
-<pre>
+    panel.innerHTML = `<pre>
 ┏━━━━━━━━━━━━━━┓
 ┃ WRONG PATH   ┃
 ┗━━━━━━━━━━━━━━┛
 
-"${path()}" does not exist.
+"${p}" does not exist.
 </pre>`;
     app.appendChild(panel);
     return;
   }
 
-  if (typeof loc === "string") {
+  if (typeof loc === 'string') {
     panel.innerHTML = `<pre>${loc}</pre>`;
   } else {
     panel.innerHTML = `<pre>${loc.text}</pre>`;
 
+    /* BOULDER PUZZLE */
     if (loc.boulder && !boulderCleared) {
-      const rock = document.createElement("pre");
-      rock.id = "boulder";
-      rock.textContent = `
-████████
+      const rock = document.createElement('pre');
+      rock.id = 'boulder';
+      rock.textContent =
+`████████
 ████████
 ████████`;
       panel.appendChild(rock);
     }
 
     if (loc.boulder && boulderCleared) {
-      panel.innerHTML += `
-<pre>
-The obstruction is gone.
-
-You notice faint text ahead:
-/thewayforward
+      panel.innerHTML += `<pre>
+The path is clear.
+Proceed to /thewayforward
 </pre>`;
+    }
+
+    /* TERMINAL */
+    if (loc.terminal) {
+      const wrap = document.createElement('div');
+      wrap.style.marginTop = '12px';
+
+      const input = document.createElement('input');
+      input.placeholder = 'username';
+
+      const btn = document.createElement('button');
+      btn.textContent = 'LOGIN';
+
+      btn.onclick = () => handleTerminal(input.value);
+      input.onkeydown = e => e.key === 'Enter' && handleTerminal(input.value);
+
+      wrap.appendChild(input);
+      wrap.appendChild(btn);
+      panel.appendChild(wrap);
+    }
+
+    /* COOKIE GATE */
+    if (loc.cookieGate) {
+      if (document.cookie.includes('access=granted')) {
+        panel.innerHTML += `<pre>
+Cookie verified.
+
+Proceed to /end
+</pre>`;
+      } else {
+        panel.innerHTML += `<pre>
+Session data appears client-controlled.
+</pre>`;
+      }
     }
   }
 
   app.appendChild(panel);
 }
 
-/* ---------- BOULDER INSPECT PUZZLE ---------- */
+/* ---------------- BOULDER OBSERVER ---------------- */
 new MutationObserver(() => {
-  if (
-    path().endsWith("/path") &&
-    document.getElementById("boulder") === null &&
-    !boulderCleared
-  ) {
+  if (!document.getElementById('boulder') && path().endsWith('/path')) {
     boulderCleared = true;
-
-    const note = document.createElement("pre");
-    note.className = "notice";
-    note.textContent = `
-The rock has vanished.
-
-Something was hidden beyond it.
-/thewayforward
-`;
-    document.querySelector(".panel").appendChild(note);
+    render();
   }
 }).observe(document.body, { childList: true, subtree: true });
 
-/* ---------- TERMINAL COOKIE PUZZLE ---------- */
-window.addEventListener("hashchange", () => {
-  if (path().endsWith("/admin")) {
-    if (document.cookie.includes("user=admin")) {
-      location.hash =
-        "#/home/outside/cave/flashlight/path/thewayforward/continue/root";
-    }
+/* ---------------- TERMINAL LOGIC ---------------- */
+function handleTerminal(val) {
+  const v = val.toLowerCase();
+  if (v.includes("'") || v.includes("or 1=1")) {
+    location.hash = '#/home/outside/cave/flashlight/path/thewayforward/continue/root';
+  } else {
+    alert("ACCESS DENIED");
   }
-  render();
-});
+}
 
+/* ---------------- LISTEN ---------------- */
+window.addEventListener('hashchange', render);
 render();
 </script>
 
