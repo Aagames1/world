@@ -9,7 +9,6 @@ body {
   background: black;
   color: #16a34a;
   font-family: monospace;
-  margin: 0;
   padding: 20px;
 }
 .panel {
@@ -29,11 +28,7 @@ pre {
 <script>
 /* ---------- ROUTING ---------- */
 if (!location.hash) location.hash = "#/home";
-const path = () => location.hash.replace("#","") || "/home";
-
-/* ---------- STATE ---------- */
-let inventory = [];
-let boulderRemoved = false;
+const path = () => location.hash.replace("#","");
 
 /* ---------- LOCATIONS ---------- */
 const locations = {
@@ -47,25 +42,25 @@ const locations = {
 
 You wake up alone.
 
-A way leads /outside
+A path leads /outside
 `,
 
 "/home/outside": `
   [ OUTSIDE ]
    🌲   🌲
 
-Paths split.
+The air is still.
 
-There's a quiet /farm.
-A darker /cave beyond.
+There is a /farm nearby.
+A dark /cave beyond.
 `,
 
 "/home/outside/farm": `
   [ FARM ]
    🌾🌾🌾
 
-A small /hut sits nearby.
-An open /field stretches out.
+A quiet /hut stands here.
+An open /field stretches outward.
 `,
 
 "/home/outside/farm/hut": `
@@ -73,7 +68,7 @@ An open /field stretches out.
    _____
   |_____| 
 
-A locked /vault rests here.
+A sealed /vault rests inside.
 `,
 
 "/home/outside/farm/hut/vault": `
@@ -86,19 +81,20 @@ A 5-letter password:
 
 "/home/outside/farm/hut/vault/CORNY": `
   [ VAULT OPEN ]
-  █ ▢ ▢ █
 
-Inside:
-A note labeled "/flashlight"
+Inside, a note:
 
-This could be useful somewhere else.
+"Sometimes the obvious path
+is hidden in plain sight.
+
+Try /flashlight."
 `,
 
 "/home/outside/farm/field": `
   [ FIELD ]
    🌽🌽🌽
 
-A broken /tractor sits idle.
+A rusted /tractor sits idle.
 `,
 
 "/home/outside/farm/field/tractor": `
@@ -110,48 +106,54 @@ Stop being CORNY."
   [ CAVE ]
    █████
 
-Dark.
-Unwise to continue.
+Darkness.
+You cannot see anything useful.
 `,
 
 "/home/outside/cave/flashlight": `
   [ CAVE LIT ]
    █ 🔦 █
 
-Light reveals:
-A narrow /path forward.
+Light reveals a narrow /path.
 `,
 
-"/home/outside/cave/flashlight/path": {
-  text: `
+"/home/outside/cave/flashlight/path": `
   [ PATH ]
   ███⛔███
 
 A massive boulder blocks the way.
-Scratched into the stone:
+Scratched faintly into the stone:
 
 "inspect"
 `,
-  boulder: true
-},
 
 "/home/outside/cave/flashlight/path/thewayforward": `
   [ BEYOND ]
-   █   █
 
-A terminal hums faintly.
+A terminal hums softly.
 
-/terminal
+/terminal/login
 `,
 
-"/home/outside/cave/flashlight/path/thewayforward/terminal": `
+"/terminal/login": `
   [ TERMINAL ]
 
 LOGIN REQUIRED
 
-Username:
+> username:
 `,
-"/admin": `
+
+"/terminal/login/' OR 1=1 --": `
+  [ TERMINAL ]
+
+QUERY ACCEPTED.
+
+Access granted.
+
+/terminal/admin
+`,
+
+"/terminal/admin": `
   ACCESS DENIED
 
 Session data appears client-controlled.
@@ -159,11 +161,10 @@ Session data appears client-controlled.
 
 "/end": `
   [ EXIT ]
-   ███
 
-You reach the core.
+The system powers down.
 
-The system shuts down.
+Nothing more remains.
 
 Thank you for playing.
 `
@@ -174,12 +175,10 @@ function render() {
   const app = document.getElementById("app");
   app.innerHTML = "";
   const p = path();
-  const loc = locations[p];
-
   const panel = document.createElement("div");
   panel.className = "panel";
 
-  if (!loc) {
+  if (!locations[p]) {
     panel.innerHTML = `<pre>
 ┏━━━━━━━━━━━━━━┓
 ┃ WRONG PATH   ┃
@@ -191,71 +190,37 @@ function render() {
     return;
   }
 
-  if (typeof loc === "string") {
-    panel.innerHTML = `<pre>${loc}</pre>`;
-  } else {
-    panel.innerHTML = `<pre>${loc.text}</pre>`;
-    if (loc.boulder && !boulderRemoved) {
-      const rock = document.createElement("pre");
-      rock.id = "boulder";
-      rock.textContent =
-`████████
-████████
-████████`;
-      panel.appendChild(rock);
-    }
-  }
-
+  panel.innerHTML = `<pre>${locations[p]}</pre>`;
   app.appendChild(panel);
 }
 
 /* ---------- BOULDER INSPECT PUZZLE ---------- */
 new MutationObserver(() => {
   if (
-    !document.getElementById("boulder") &&
     path().endsWith("/path") &&
-    !boulderRemoved
+    !document.querySelector(".boulder-removed") &&
+    !document.querySelector("#boulder")
   ) {
-    boulderRemoved = true;
     const note = document.createElement("pre");
+    note.className = "boulder-removed";
     note.textContent = `
 The obstruction is gone.
 
-Faint text appears:
+You notice text etched ahead:
 /thewayforward
 `;
     document.querySelector(".panel").appendChild(note);
   }
 }).observe(document.body, { childList: true, subtree: true });
 
-/* ---------- HASH CHANGE LOGIC ---------- */
+/* ---------- COOKIE CHECK ---------- */
 window.addEventListener("hashchange", () => {
-
-  /* flashlight gate */
-  if (path().includes("/cave/flashlight") && !inventory.includes("flashlight")) {
-    location.hash = "#/home/outside/cave";
-  }
-
-  /* vault reward */
-  if (path().endsWith("/vault/CORNY") && !inventory.includes("flashlight")) {
-    inventory.push("flashlight");
-  }
-
-  /* SQL injection terminal */
-  if (path().endsWith("/terminal")) {
-    const input = prompt("username:");
-    if (input && /('|--|OR 1=1)/i.test(input)) {
-      location.hash = "#/admin";
-    }
-  }
-
-  /* cookie puzzle */
-  if (path() === "/admin") {
-    if (document.cookie.includes("user=admin")) {
+  if (path() === "/terminal/admin") {
+    if (document.cookie.includes("auth=admin")) {
       location.hash = "#/end";
+      return;
     }
   }
-
   render();
 });
 
