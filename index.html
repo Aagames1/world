@@ -48,42 +48,52 @@ const pages = {
 |  BED  |
 |_______|
 
-You wake up alone.
+You wake up alone, unsure why you're here.
 
 A path leads /outside
+
+Navigate the world by editing the url. Try visiting /home/outside
 `,
 
 "/home/outside": `
 [ OUTSIDE ]
 
-To the left: /farm
-To the right: /cave
+You go outside, but there's no sign of life anywhere. 
+
+To your left, a deserted /farm
+To your right, a looming /cave
 `,
 
 "/home/outside/farm": `
 [ FARM ]
 
-There is a /hut
-An open /field
+You breath in the fresh air in the farm.
+
+An open /field full of crops awaits.
+You also notice a small /hut nearby.
 `,
 
 "/home/outside/farm/field": `
 [ FIELD ]
 
-A broken /tractor
+You walk through the crops, still flowing through the winds. 
+A broken /tractor sits in the middle.
 `,
 
 "/home/outside/farm/field/tractor": `
 [ TRACTOR ]
 
+You look around and investigate the tractor. The engine seems to be missing. Inside the tractor, there's a note.
 "What did the crop say to the other crop?
-Stop being CORNY."
+Stop being CORNY!"
+
+You're not sure what this could be used for.
 `,
 
 "/home/outside/farm/hut": `
 [ HUT ]
 
-A locked /vault
+There's nothing inside, except for a locked /vault
 `,
 
 "/home/outside/farm/hut/vault": `
@@ -96,9 +106,7 @@ A 5-letter lock.
 "/home/outside/farm/hut/vault/CORNY": `
 [ VAULT OPEN ]
 
-Inside is a torn note:
-
-"/FLASHLIGHT"
+You unlocked the vault, inside is some medical gear, and a /FLASHLIGHT
 
 This could be useful somewhere else.
 `,
@@ -106,23 +114,25 @@ This could be useful somewhere else.
 "/home/outside/cave": `
 [ CAVE ]
 
-Too dark to see.
+You approach the cave, but it's too dark to see inside.
+
+Might not be a good idea to come here for now.
 `,
 
-"/home/outside/cave/flashlight": `
+"/home/outside/cave/FLASHLIGHT": `
 [ CAVE LIT ]
 
-A cracked /wall
-A deep /hole
-A narrow /path
+Using the flashlight, you venture inside the cave. You're not sure why, but it seems to be calling your name.
+
+A narrow /path awaits.
 `,
 
 "/home/outside/cave/flashlight/path": `
 [ NARROW PATH ]
 
-A massive boulder blocks the way.
+A massive boulder blocks the way. Attempting to push it leads to no avail. 
 
-Scratched into stone:
+Scratched into stone, you see a single word:
 
 "inspect"
 `,
@@ -155,18 +165,22 @@ A dusty terminal hums.
 
 SYSTEM UNLOCKED.
 
-A final door stands ahead.
+A final door stands ahead. 
+
+┌──────────┐
+│    🍪    │
+└──────────┘
 `,
 
 "/home/outside/cave/flashlight/path/thewayforward/continue/root/end": `
 [ END ]
 
-The system shuts down.
+The door opens, the system shuts down.
 
 You were never meant to escape —
 only to understand.
 
-Congratulations.
+Congratulations, for now...
 `
 };
 
