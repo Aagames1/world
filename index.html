@@ -9,11 +9,15 @@ body {
   background: black;
   color: #16a34a;
   font-family: monospace;
+  margin: 0;
   padding: 20px;
 }
 .panel {
   border: 1px solid #16a34a;
   padding: 16px;
+}
+.notice {
+  color: #a7f3d0;
 }
 pre {
   white-space: pre-wrap;
@@ -28,145 +32,171 @@ pre {
 <script>
 /* ---------- ROUTING ---------- */
 if (!location.hash) location.hash = "#/home";
-const path = () => location.hash.replace("#","");
+const path = () => location.hash.slice(1) || "/home";
+
+/* ---------- GAME STATE (minimal) ---------- */
+let boulderCleared = false;
 
 /* ---------- LOCATIONS ---------- */
 const locations = {
 
 "/home": `
-  [ HOME ]
+   [ HOME ]
    _______
   |       |
   |  BED  |
   |_______|
 
 You wake up alone.
+No sound. No movement.
 
 A path leads /outside
 `,
 
 "/home/outside": `
-  [ OUTSIDE ]
-   🌲   🌲
+   [ OUTSIDE ]
+     ☁   ☁
+   🌲       🌲
 
-The air is still.
+Cold air.
+The world feels abandoned.
 
 There is a /farm nearby.
-A dark /cave beyond.
+A darker trail leads into a /cave.
 `,
 
 "/home/outside/farm": `
-  [ FARM ]
+   [ FARM ]
+   🌾🌾🌾
    🌾🌾🌾
 
-A quiet /hut stands here.
-An open /field stretches outward.
-`,
+The crops still grow.
 
-"/home/outside/farm/hut": `
-  [ HUT ]
-   _____
-  |_____| 
-
-A sealed /vault rests inside.
-`,
-
-"/home/outside/farm/hut/vault": `
-  [ VAULT ]
-  ███████
-
-A 5-letter password:
-/vault/?????
-`,
-
-"/home/outside/farm/hut/vault/CORNY": `
-  [ VAULT OPEN ]
-
-Inside, a note:
-
-"Sometimes the obvious path
-is hidden in plain sight.
-
-Try /flashlight."
+You notice a /hut.
+Beyond it, an open /field.
 `,
 
 "/home/outside/farm/field": `
-  [ FIELD ]
+   [ FIELD ]
    🌽🌽🌽
 
-A rusted /tractor sits idle.
+A rusted /tractor sits quietly.
 `,
 
 "/home/outside/farm/field/tractor": `
+   [ TRACTOR ]
+
+A note stuck under the seat reads:
+
 "What did the crop say to the other crop?
 Stop being CORNY."
 `,
 
+"/home/outside/farm/hut": `
+   [ HUT ]
+    _____
+   |_____|
+
+Dust coats the floor.
+
+A sealed /vault rests in the corner.
+`,
+
+"/home/outside/farm/hut/vault": `
+   [ VAULT ]
+   ███████
+
+A 5-letter lock.
+`,
+
+"/home/outside/farm/hut/vault/CORNY": `
+   [ VAULT OPEN ]
+
+Inside:
+medical supplies
+a small flashlight
+
+"/FLASHLIGHT obtained.
+This could be useful somewhere else."
+`,
+
 "/home/outside/cave": `
-  [ CAVE ]
+   [ CAVE ]
    █████
 
-Darkness.
-You cannot see anything useful.
+Darkness swallows the entrance.
+
+You feel like going further might require
+something you don't yet have.
 `,
 
 "/home/outside/cave/flashlight": `
-  [ CAVE LIT ]
-   █ 🔦 █
+   [ CAVE — LIT ]
+   █  🔦  █
 
-Light reveals a narrow /path.
+Light reveals branching tunnels.
+
+There's a /wall here,
+a deep /hole,
+and a narrow /path ahead.
 `,
 
-"/home/outside/cave/flashlight/path": `
-  [ PATH ]
-  ███⛔███
+"/home/outside/cave/flashlight/path": {
+  text: `
+   [ NARROW PATH ]
+   ███⛔████
 
 A massive boulder blocks the way.
-Scratched faintly into the stone:
 
+Scratched faintly into the stone:
 "inspect"
 `,
+  boulder: true
+},
 
 "/home/outside/cave/flashlight/path/thewayforward": `
-  [ BEYOND ]
+   [ BEYOND ]
+    █   █
 
-A terminal hums softly.
+The boulder is gone.
 
-/terminal/login
+A warning sign reads:
+"YOU WERE WARNED"
+
+You may /continue
 `,
 
-"/terminal/login": `
-  [ TERMINAL ]
+"/home/outside/cave/flashlight/path/thewayforward/continue": `
+   [ TERMINAL ]
+   ┌──────────┐
+   │ ACCESS   │
+   └──────────┘
 
-LOGIN REQUIRED
+A dusty terminal hums to life.
 
-> username:
+> LOGIN REQUIRED
 `,
 
-"/terminal/login/' OR 1=1 --": `
-  [ TERMINAL ]
-
-QUERY ACCEPTED.
-
-Access granted.
-
-/terminal/admin
-`,
-
-"/terminal/admin": `
-  ACCESS DENIED
+"/home/outside/cave/flashlight/path/thewayforward/continue/admin": `
+ACCESS DENIED
 
 Session data appears client-controlled.
 `,
 
-"/end": `
-  [ EXIT ]
+"/home/outside/cave/flashlight/path/thewayforward/continue/root": `
+   [ CORE ]
 
-The system powers down.
+The system unlocks.
 
-Nothing more remains.
+Logs scroll endlessly.
+The world was automated.
+Then abandoned.
 
-Thank you for playing.
+You were not meant to find this.
+
+But you did.
+
+> END
 `
 };
 
@@ -174,23 +204,51 @@ Thank you for playing.
 function render() {
   const app = document.getElementById("app");
   app.innerHTML = "";
-  const p = path();
+
   const panel = document.createElement("div");
   panel.className = "panel";
 
-  if (!locations[p]) {
-    panel.innerHTML = `<pre>
+  const loc = locations[path()];
+
+  if (!loc) {
+    panel.innerHTML = `
+<pre>
 ┏━━━━━━━━━━━━━━┓
 ┃ WRONG PATH   ┃
 ┗━━━━━━━━━━━━━━┛
 
-"${p}" does not exist.
+"${path()}" does not exist.
 </pre>`;
     app.appendChild(panel);
     return;
   }
 
-  panel.innerHTML = `<pre>${locations[p]}</pre>`;
+  if (typeof loc === "string") {
+    panel.innerHTML = `<pre>${loc}</pre>`;
+  } else {
+    panel.innerHTML = `<pre>${loc.text}</pre>`;
+
+    if (loc.boulder && !boulderCleared) {
+      const rock = document.createElement("pre");
+      rock.id = "boulder";
+      rock.textContent = `
+████████
+████████
+████████`;
+      panel.appendChild(rock);
+    }
+
+    if (loc.boulder && boulderCleared) {
+      panel.innerHTML += `
+<pre>
+The obstruction is gone.
+
+You notice faint text ahead:
+/thewayforward
+</pre>`;
+    }
+  }
+
   app.appendChild(panel);
 }
 
@@ -198,27 +256,29 @@ function render() {
 new MutationObserver(() => {
   if (
     path().endsWith("/path") &&
-    !document.querySelector(".boulder-removed") &&
-    !document.querySelector("#boulder")
+    document.getElementById("boulder") === null &&
+    !boulderCleared
   ) {
-    const note = document.createElement("pre");
-    note.className = "boulder-removed";
-    note.textContent = `
-The obstruction is gone.
+    boulderCleared = true;
 
-You notice text etched ahead:
+    const note = document.createElement("pre");
+    note.className = "notice";
+    note.textContent = `
+The rock has vanished.
+
+Something was hidden beyond it.
 /thewayforward
 `;
     document.querySelector(".panel").appendChild(note);
   }
 }).observe(document.body, { childList: true, subtree: true });
 
-/* ---------- COOKIE CHECK ---------- */
+/* ---------- TERMINAL COOKIE PUZZLE ---------- */
 window.addEventListener("hashchange", () => {
-  if (path() === "/terminal/admin") {
-    if (document.cookie.includes("auth=admin")) {
-      location.hash = "#/end";
-      return;
+  if (path().endsWith("/admin")) {
+    if (document.cookie.includes("user=admin")) {
+      location.hash =
+        "#/home/outside/cave/flashlight/path/thewayforward/continue/root";
     }
   }
   render();
