@@ -5,28 +5,31 @@
 <title>Puzzle World</title>
 
 <style>
-body {
-  background: black;
-  color: #16a34a;
-  font-family: monospace;
-  padding: 20px;
-}
-.panel {
-  border: 1px solid #16a34a;
-  padding: 16px;
-  max-width: 900px;
-}
-pre {
-  margin: 0;
-  white-space: pre-wrap;
-}
-input, button {
-  background: black;
-  color: #16a34a;
-  border: 1px solid #16a34a;
-  font-family: monospace;
-}
-button { cursor: pointer; }
+  body{
+    background:#000;
+    color:#16a34a;
+    font-family: monospace;
+    padding:20px;
+    margin:0;
+  }
+  .panel{
+    border:1px solid #16a34a;
+    padding:16px;
+    max-width:900px;
+  }
+  pre{
+    margin:0;
+    white-space:pre-wrap;
+  }
+  input,button{
+    background:#000;
+    color:#16a34a;
+    border:1px solid #16a34a;
+    font-family: monospace;
+    padding:4px 8px;
+    margin-top:10px;
+  }
+  button{ cursor:pointer; }
 </style>
 </head>
 <body>
@@ -40,8 +43,7 @@ const getPath = () => location.hash.slice(1) || '/home';
 
 /* ---------- WORLD DATA ---------- */
 const pages = {
-
-"/home": `
+  "/home": `
 [ HOME ]
  _______
 |       |
@@ -55,16 +57,16 @@ A path leads /outside
 Navigate the world by editing the url. Try visiting /home/outside
 `,
 
-"/home/outside": `
+  "/home/outside": `
 [ OUTSIDE ]
 
-You go outside, but there's no sign of life anywhere. 
+You go outside, but there's no sign of life anywhere.
 
 To your left, a deserted /farm
 To your right, a looming /cave
 `,
 
-"/home/outside/farm": `
+  "/home/outside/farm": `
 [ FARM ]
 
 You breath in the fresh air in the farm.
@@ -73,14 +75,14 @@ An open /field full of crops awaits.
 You also notice a small /hut nearby.
 `,
 
-"/home/outside/farm/field": `
+  "/home/outside/farm/field": `
 [ FIELD ]
 
-You walk through the crops, still flowing through the winds. 
+You walk through the crops, still flowing through the winds.
 A broken /tractor sits in the middle.
 `,
 
-"/home/outside/farm/field/tractor": `
+  "/home/outside/farm/field/tractor": `
 [ TRACTOR ]
 
 You look around and investigate the tractor. The engine seems to be missing. Inside the tractor, there's a note.
@@ -90,20 +92,20 @@ Stop being CORNY!"
 You're not sure what this could be used for.
 `,
 
-"/home/outside/farm/hut": `
+  "/home/outside/farm/hut": `
 [ HUT ]
 
 There's nothing inside, except for a locked /vault
 `,
 
-"/home/outside/farm/hut/vault": `
+  "/home/outside/farm/hut/vault": `
 [ VAULT ]
 
 A 5-letter lock.
 /vault/?????
 `,
 
-"/home/outside/farm/hut/vault/CORNY": `
+  "/home/outside/farm/hut/vault/CORNY": `
 [ VAULT OPEN ]
 
 You unlocked the vault, inside is some medical gear, and a /FLASHLIGHT
@@ -111,7 +113,7 @@ You unlocked the vault, inside is some medical gear, and a /FLASHLIGHT
 This could be useful somewhere else.
 `,
 
-"/home/outside/cave": `
+  "/home/outside/cave": `
 [ CAVE ]
 
 You approach the cave, but it's too dark to see inside.
@@ -119,7 +121,7 @@ You approach the cave, but it's too dark to see inside.
 Might not be a good idea to come here for now.
 `,
 
-"/home/outside/cave/FLASHLIGHT": `
+  "/home/outside/cave/FLASHLIGHT": `
 [ CAVE LIT ]
 
 Using the flashlight, you venture inside the cave. You're not sure why, but it seems to be calling your name.
@@ -127,17 +129,17 @@ Using the flashlight, you venture inside the cave. You're not sure why, but it s
 A narrow /path awaits.
 `,
 
-"/home/outside/cave/FLASHLIGHT/path": `
+  "/home/outside/cave/FLASHLIGHT/path": `
 [ NARROW PATH ]
 
-A massive boulder blocks the way. Attempting to push it leads to no avail. 
+A massive boulder blocks the way. Attempting to push it leads to no avail.
 
 Scratched into stone, you see a single word:
 
 "inspect"
 `,
 
-"/home/outside/cave/FLASHLIGHT/path/thewayforward": `
+  "/home/outside/cave/FLASHLIGHT/path/thewayforward": `
 [ BEYOND ]
 
 The boulder is gone.
@@ -149,7 +151,7 @@ A warning sign reads:
 You may /continue
 `,
 
-"/home/outside/cave/FLASHLIGHT/path/thewayforward/continue": `
+  "/home/outside/cave/FLASHLIGHT/path/thewayforward/continue": `
 [ TERMINAL ]
  ┌──────────┐
  │ ACCESS   │
@@ -160,19 +162,19 @@ A dusty terminal hums.
 > LOGIN REQUIRED
 `,
 
-"/home/outside/cave/FLASHLIGHT/path/thewayforward/continue/root": `
+  "/home/outside/cave/FLASHLIGHT/path/thewayforward/continue/root": `
 [ ROOT ACCESS ]
 
 SYSTEM UNLOCKED.
 
-A final door stands ahead. 
+A final door stands ahead.
 
 ┌──────────┐
 │    🍪    │
 └──────────┘
 `,
 
-"/home/outside/cave/FLASHLIGHT/path/thewayforward/continue/root/end": `
+  "/home/outside/cave/FLASHLIGHT/path/thewayforward/continue/root/end": `
 [ END ]
 
 The door opens, the system shuts down.
@@ -185,7 +187,7 @@ Congratulations, for now...
 };
 
 /* ---------- RENDER ---------- */
-function render() {
+function render(){
   const app = document.getElementById('app');
   app.innerHTML = '';
 
@@ -196,7 +198,7 @@ function render() {
   if (!pages[path]) {
     panel.innerHTML = `<pre>
 ┏━━━━━━━━━━━━━━┓
-┃ WRONG PATH             ┃
+┃ WRONG PATH   ┃
 ┗━━━━━━━━━━━━━━┛
 
 "${path}" does not exist.
@@ -207,29 +209,38 @@ function render() {
 
   panel.innerHTML = `<pre>${pages[path]}</pre>`;
 
-  /* ---------- BOULDER PUZZLE ---------- */
+  /* ---------- BOULDER PUZZLE (REVEAL ON DELETE) ---------- */
   if (path.endsWith('/path')) {
     const boulder = document.createElement('pre');
     boulder.id = 'boulder';
-    boulder.innerHTML = `
+    boulder.textContent = `
 ████████████████████
 ████████████████████
 ████████████████████
 ████████████████████
-
-<span style="
-  color:#0a3;
-  font-size:11px;
-  opacity:0.01;
-  letter-spacing:2px;
-">
-/thewayforward
-</span>
 `;
     panel.appendChild(boulder);
+
+    // Watch for boulder deletion in DevTools.
+    const observer = new MutationObserver(() => {
+      if (!document.getElementById('boulder')) {
+        const reveal = document.createElement('pre');
+        reveal.style.marginTop = '12px';
+        reveal.textContent = `
+The stone collapses.
+
+Carved beneath it, you find:
+
+/thewayforward
+`;
+        panel.appendChild(reveal);
+        observer.disconnect();
+      }
+    });
+    observer.observe(panel, { childList: true });
   }
 
-  /* ---------- TERMINAL ---------- */
+  /* ---------- TERMINAL (SQLi) ---------- */
   if (path.endsWith('/continue')) {
     const input = document.createElement('input');
     input.placeholder = 'username';
@@ -237,17 +248,20 @@ function render() {
     const btn = document.createElement('button');
     btn.textContent = 'LOGIN';
 
-    btn.onclick = () => {
-      const v = input.value.toLowerCase();
-      if (v.includes("'") || v.includes("or 1=1")) {
-        alert('ACCESS TO /root GRANTED. ');
+    function attempt(){
+      const v = (input.value || '').toLowerCase();
+      // simple "SQLi-ish" check
+      if (v.includes("'") || v.includes("--") || v.includes("or 1=1") || v.includes("or '1'='1")) {
+        alert('ACCESS TO /root GRANTED.');
       } else {
         alert('ACCESS DENIED');
       }
-    };
+    }
 
-    input.onkeydown = e => e.key === 'Enter' && btn.click();
+    btn.onclick = attempt;
+    input.onkeydown = (e) => { if (e.key === 'Enter') attempt(); };
 
+    panel.appendChild(document.createElement('br'));
     panel.appendChild(input);
     panel.appendChild(btn);
   }
