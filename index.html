@@ -28,9 +28,7 @@ input, button {
   font-family: monospace;
   padding: 4px;
 }
-button {
-  cursor: pointer;
-}
+button { cursor: pointer; }
 </style>
 </head>
 <body>
@@ -38,14 +36,15 @@ button {
 <div id="app"></div>
 
 <script>
-/* ---------------- ROUTING ---------------- */
+/* ---------- ROUTING ---------- */
 if (!location.hash) location.hash = '#/home';
-function path() { return location.hash.slice(1) || '/home'; }
+const getPath = () => location.hash.slice(1) || '/home';
 
-/* ---------------- STATE ---------------- */
-let boulderCleared = false;
+/* ---------- STATE ---------- */
+let boulderEverRendered = false;
+let boulderRemoved = false;
 
-/* ---------------- LOCATIONS ---------------- */
+/* ---------- LOCATIONS ---------- */
 const locations = {
 
 "/home": `
@@ -62,9 +61,6 @@ Paths lead /outside
 
 "/home/outside": `
 [ OUTSIDE ]
-  🌲     🌲
-
-Fresh air.
 
 To the left: /farm
 To the right: /cave
@@ -72,7 +68,6 @@ To the right: /cave
 
 "/home/outside/farm": `
 [ FARM ]
- 🌾🌾🌾
 
 There is a /hut
 An open /field
@@ -80,7 +75,6 @@ An open /field
 
 "/home/outside/farm/field": `
 [ FIELD ]
- 🌽🌽🌽
 
 A broken /tractor
 `,
@@ -88,7 +82,7 @@ A broken /tractor
 "/home/outside/farm/field/tractor": `
 [ TRACTOR ]
 
-A sticky note reads:
+A note reads:
 
 "What did the crop say to the other crop?
 Stop being CORNY."
@@ -97,7 +91,6 @@ Stop being CORNY."
 "/home/outside/farm/hut": `
 [ HUT ]
 
-Dusty.
 A locked /vault
 `,
 
@@ -126,8 +119,6 @@ Too dark to see.
 
 "/home/outside/cave/flashlight": `
 [ CAVE LIT ]
-
-With light, paths appear.
 
 A /wall
 A /hole
@@ -185,9 +176,6 @@ A final door stands ahead.
 "/home/outside/cave/flashlight/path/thewayforward/continue/root/end": `
 [ END ]
 
-You step forward.
-
-The world flickers.
 The system shuts down.
 
 You were never meant to escape —
@@ -197,11 +185,12 @@ Congratulations.
 `
 };
 
-/* ---------------- RENDER ---------------- */
+/* ---------- RENDER ---------- */
 function render() {
   const app = document.getElementById('app');
   app.innerHTML = '';
-  const p = path();
+
+  const p = getPath();
   const loc = locations[p];
 
   const panel = document.createElement('div');
@@ -224,29 +213,27 @@ function render() {
   } else {
     panel.innerHTML = `<pre>${loc.text}</pre>`;
 
-    /* BOULDER PUZZLE */
-    if (loc.boulder && !boulderCleared) {
-      const rock = document.createElement('pre');
-      rock.id = 'boulder';
-      rock.textContent =
+    /* BOULDER */
+    if (loc.boulder) {
+      if (!boulderRemoved) {
+        const rock = document.createElement('pre');
+        rock.id = 'boulder';
+        rock.textContent =
 `████████
 ████████
 ████████`;
-      panel.appendChild(rock);
-    }
-
-    if (loc.boulder && boulderCleared) {
-      panel.innerHTML += `<pre>
+        panel.appendChild(rock);
+        boulderEverRendered = true;
+      } else {
+        panel.innerHTML += `<pre>
 The path is clear.
 Proceed to /thewayforward
 </pre>`;
+      }
     }
 
     /* TERMINAL */
     if (loc.terminal) {
-      const wrap = document.createElement('div');
-      wrap.style.marginTop = '12px';
-
       const input = document.createElement('input');
       input.placeholder = 'username';
 
@@ -256,9 +243,8 @@ Proceed to /thewayforward
       btn.onclick = () => handleTerminal(input.value);
       input.onkeydown = e => e.key === 'Enter' && handleTerminal(input.value);
 
-      wrap.appendChild(input);
-      wrap.appendChild(btn);
-      panel.appendChild(wrap);
+      panel.appendChild(input);
+      panel.appendChild(btn);
     }
 
     /* COOKIE GATE */
@@ -280,25 +266,30 @@ Session data appears client-controlled.
   app.appendChild(panel);
 }
 
-/* ---------------- BOULDER OBSERVER ---------------- */
+/* ---------- BOULDER OBSERVER (FIXED) ---------- */
 new MutationObserver(() => {
-  if (!document.getElementById('boulder') && path().endsWith('/path')) {
-    boulderCleared = true;
+  if (
+    boulderEverRendered &&
+    !document.getElementById('boulder') &&
+    getPath().endsWith('/path')
+  ) {
+    boulderRemoved = true;
     render();
   }
 }).observe(document.body, { childList: true, subtree: true });
 
-/* ---------------- TERMINAL LOGIC ---------------- */
+/* ---------- TERMINAL ---------- */
 function handleTerminal(val) {
   const v = val.toLowerCase();
   if (v.includes("'") || v.includes("or 1=1")) {
-    location.hash = '#/home/outside/cave/flashlight/path/thewayforward/continue/root';
+    location.hash =
+      '#/home/outside/cave/flashlight/path/thewayforward/continue/root';
   } else {
-    alert("ACCESS DENIED");
+    alert('ACCESS DENIED');
   }
 }
 
-/* ---------------- LISTEN ---------------- */
+/* ---------- LISTEN ---------- */
 window.addEventListener('hashchange', render);
 render();
 </script>
