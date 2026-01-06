@@ -20,9 +20,6 @@ pre {
   margin: 0;
   white-space: pre-wrap;
 }
-.hidden {
-  display: none;
-}
 input, button {
   background: black;
   color: #16a34a;
@@ -39,9 +36,9 @@ button { cursor: pointer; }
 <script>
 /* ---------- ROUTING ---------- */
 if (!location.hash) location.hash = '#/home';
-const path = () => location.hash.slice(1) || '/home';
+const getPath = () => location.hash.slice(1) || '/home';
 
-/* ---------- LOCATIONS ---------- */
+/* ---------- WORLD DATA ---------- */
 const pages = {
 
 "/home": `
@@ -99,7 +96,7 @@ A 5-letter lock.
 "/home/outside/farm/hut/vault/CORNY": `
 [ VAULT OPEN ]
 
-Inside is a note:
+Inside is a torn note:
 
 "/FLASHLIGHT"
 
@@ -115,9 +112,9 @@ Too dark to see.
 "/home/outside/cave/flashlight": `
 [ CAVE LIT ]
 
-A narrow /path
 A cracked /wall
 A deep /hole
+A narrow /path
 `,
 
 "/home/outside/cave/flashlight/path": `
@@ -133,7 +130,9 @@ Scratched into stone:
 "/home/outside/cave/flashlight/path/thewayforward": `
 [ BEYOND ]
 
-A sign reads:
+The boulder is gone.
+
+A warning sign reads:
 
 "YOU WERE WARNED"
 
@@ -146,6 +145,8 @@ You may /continue
  │ ACCESS   │
  └──────────┘
 
+A dusty terminal hums.
+
 > LOGIN REQUIRED
 `,
 
@@ -154,11 +155,13 @@ You may /continue
 
 SYSTEM UNLOCKED.
 
-A final door waits.
+A final door stands ahead.
 `,
 
 "/home/outside/cave/flashlight/path/thewayforward/continue/root/end": `
 [ END ]
+
+The system shuts down.
 
 You were never meant to escape —
 only to understand.
@@ -172,55 +175,51 @@ function render() {
   const app = document.getElementById('app');
   app.innerHTML = '';
 
-  const p = path();
+  const path = getPath();
   const panel = document.createElement('div');
   panel.className = 'panel';
 
-  if (!pages[p]) {
+  if (!pages[path]) {
     panel.innerHTML = `<pre>
 ┏━━━━━━━━━━━━━━┓
 ┃ WRONG PATH   ┃
 ┗━━━━━━━━━━━━━━┛
 
-"${p}" does not exist.
+"${path}" does not exist.
 </pre>`;
     app.appendChild(panel);
     return;
   }
 
-  panel.innerHTML = `<pre>${pages[p]}</pre>`;
+  panel.innerHTML = `<pre>${pages[path]}</pre>`;
 
-  /* BOULDER PUZZLE */
-  if (p.endsWith('/path')) {
-    const rock = document.createElement('pre');
-    rock.id = 'boulder';
-    rock.textContent =
-`████████
-████████
-████████`;
+  /* ---------- BOULDER PUZZLE ---------- */
+  if (path.endsWith('/path')) {
+    const boulder = document.createElement('pre');
+    boulder.id = 'boulder';
+    boulder.innerHTML = `
+████████████████████
+████████████████████
+████████████████████
+████████████████████
 
-    const hidden = document.createElement('pre');
-    hidden.className = 'hidden';
-    hidden.textContent = `
-Behind the boulder, scratched faintly:
-
+<span style="
+  color:#0a3;
+  font-size:11px;
+  opacity:0.35;
+  letter-spacing:2px;
+">
 /thewayforward
+</span>
 `;
-
-    panel.appendChild(rock);
-    panel.appendChild(hidden);
-
-    /* REVEAL WHEN BOULDER IS DELETED */
-    new MutationObserver(() => {
-      if (!document.getElementById('boulder')) {
-        hidden.classList.remove('hidden');
-      }
-    }).observe(panel, { childList: true });
+    panel.appendChild(boulder);
   }
 
-  /* TERMINAL */
-  if (p.endsWith('/continue')) {
+  /* ---------- TERMINAL ---------- */
+  if (path.endsWith('/continue')) {
     const input = document.createElement('input');
+    input.placeholder = 'username';
+
     const btn = document.createElement('button');
     btn.textContent = 'LOGIN';
 
@@ -232,6 +231,8 @@ Behind the boulder, scratched faintly:
         alert('ACCESS DENIED');
       }
     };
+
+    input.onkeydown = e => e.key === 'Enter' && btn.click();
 
     panel.appendChild(input);
     panel.appendChild(btn);
