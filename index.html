@@ -31,165 +31,136 @@ pre {
 <div id="app"></div>
 
 <script>
-/* ---------------- ROUTING ---------------- */
 if (!location.hash) location.hash = '#/home';
 
 function getPath() {
   return location.hash.replace('#','') || '/home';
 }
 
-/* ---------------- GAME STATE ---------------- */
-let inventory = [];
 let boulderRemoved = false;
 
-/* ---------------- LOCATIONS ---------------- */
+/* ---------- LOCATIONS ---------- */
 const locations = {
 
 "/home": `
-  [ HOME ]
-   _______
-  |       |
-  |  BED  |
-  |_______|
+[ HOME ]
+ _______
+|       |
+|  BED  |
+|_______|
 
 You wake up alone.
-The world is silent.
 
-There is a way leading /outside
-
-Navigate the world by editing the url, try /home/outside
+A path leads /outside
 `,
 
 "/home/outside": `
-  [ OUTSIDE ]
-     ☁ ☁
-   🌲     🌲
+[ OUTSIDE ]
+ ☁ ☁   🌲
 
-Fresh air.
-Paths split here.
-
-There is a /farm nearby.
-A darker trail leads to a /cave.
+There is a /farm.
+There is a /cave.
 `,
 
 "/home/outside/farm": `
-  [ FARM ]
-   🌾🌾🌾
-   🌾🌾🌾
+[ FARM ]
+ 🌾🌾🌾
 
-Crops sway gently.
-
-There's a small /hut.
-An open /field stretches outward.
+A /hut stands nearby.
+An open /field stretches out.
 `,
 
 "/home/outside/farm/hut": `
-  [ HUT ]
-   _____
-  |_____| 
+[ HUT ]
+ _____
+|_____|
 
-Dusty and empty.
-
-Something metal catches your eye.
 A locked /vault sits here.
 `,
 
 "/home/outside/farm/hut/vault": `
-  [ VAULT ]
-  ███████
+[ VAULT ]
+ ███████
 
 A 5-letter lock.
-/vault/?????.
 `,
 
 "/home/outside/farm/hut/vault/CORNY": `
-  [ VAULT OPEN ]
-  █ ▢ ▢ █
+[ VAULT OPEN ]
 
-Inside:
-- medical supplies
-- a flashlight
+Inside the vault, scratched faintly:
 
-You take the /flashlight. Perhaps this could be useful somewhere else.
+"/flashlight"
+
+This could be useful somewhere else.
 `,
 
 "/home/outside/farm/field": `
-  [ FIELD ]
-   🌽🌽🌽
-   🌽🌽🌽
+[ FIELD ]
+ 🌽🌽🌽
 
-A broken /tractor sits idle.
+A broken /tractor rests here.
 `,
 
 "/home/outside/farm/field/tractor": `
-  [ TRACTOR ]
-   ______
-  |_____|_
+[ TRACTOR ]
 
-A sticky note reads:
-
-"What did the crop say to the other crop?
+"What did the crop say?
 Stop being CORNY."
 `,
 
 "/home/outside/cave": `
-  [ CAVE ]
-   █████
-  █     █
+[ CAVE ]
+ █████
 
-Dark.
-Too dark to see anything useful.
-
-It feels unwise to continue.
+Too dark to proceed safely.
 `,
 
 "/home/outside/cave/flashlight": `
-  [ CAVE LIT ]
-   █  🔦  █
+[ CAVE – LIT ]
 
-Light reveals paths.
+Light reveals three options:
 
-There is a rough /wall.
-A deep /hole.
-And a narrow /path forward.
+A rough /wall
+A deep /hole
+A narrow /path
 `,
 
 "/home/outside/cave/flashlight/path": {
+  boulder: true,
   text: `
-  [ NARROW PATH ]
-  ████⛔████
+[ NARROW PATH ]
 
 A massive boulder blocks the way.
-Scratched into stone:
+
+Scratched into the stone:
 
 "inspect"
-`,
-  boulder: true
+`
 },
 
 "/home/outside/cave/flashlight/path/thewayforward": `
-  [ BEYOND ]
-   █   █
+[ BEYOND ]
 
-The boulder is gone.
+The path is open.
 
 A warning sign reads:
+
 "YOU WERE WARNED"
 
 You may /continue
 `,
 
-"/home/outside/cave/flashlight/path/thewayforward": `
-  [ END ]
-   ███
+"/continue": `
+[ END ]
 
-You disappear into the dark.
+You step forward and vanish.
 
 (To be continued)
 `
 };
 
-/* ---------------- RENDER ---------------- */
+/* ---------- RENDER ---------- */
 function render() {
   const app = document.getElementById('app');
   app.innerHTML = '';
@@ -202,8 +173,7 @@ function render() {
 
   if (!loc) {
     panel.classList.add('error');
-    panel.innerHTML = `
-<pre>
+    panel.innerHTML = `<pre>
 ┏━━━━━━━━━━━━━━┓
 ┃ WRONG PATH   ┃
 ┗━━━━━━━━━━━━━━┛
@@ -222,46 +192,40 @@ function render() {
     if (loc.boulder && !boulderRemoved) {
       const rock = document.createElement('pre');
       rock.id = 'boulder';
-      rock.textContent =
-`████████
+      rock.textContent = `
 ████████
-████████`;
+████████
+████████
+`;
       panel.appendChild(rock);
     }
 
     if (loc.boulder && boulderRemoved) {
-      panel.innerHTML += `<pre>\nThe path forward is clear.\nYou see /thewayforward</pre>`;
-    }
-  }
+      panel.innerHTML += `<pre>
 
-  if (inventory.length) {
-    panel.innerHTML += `<pre>\nInventory: ${inventory.join(', ')}</pre>`;
+The obstruction is gone.
+
+There is a /thewayforward
+</pre>`;
+    }
   }
 
   app.appendChild(panel);
 }
 
-/* ---------------- BOULDER INSPECT PUZZLE ---------------- */
+/* ---------- BOULDER PUZZLE ---------- */
 new MutationObserver(() => {
-  if (!document.getElementById('boulder') && getPath().endsWith('/path')) {
+  if (
+    !document.getElementById('boulder') &&
+    getPath() === '/home/outside/cave/flashlight/path' &&
+    !boulderRemoved
+  ) {
     boulderRemoved = true;
     render();
   }
 }).observe(document.body, { childList: true, subtree: true });
 
-/* ---------------- INVENTORY CHECKS ---------------- */
-window.addEventListener('hashchange', () => {
-  if (getPath().endsWith('/flashlight') && !inventory.includes('flashlight')) {
-    location.hash = '#/home/outside/cave';
-  }
-
-  if (getPath().endsWith('/vault/CORNY') && !inventory.includes('flashlight')) {
-    inventory.push('flashlight');
-  }
-
-  render();
-});
-
+window.addEventListener('hashchange', render);
 render();
 </script>
 
