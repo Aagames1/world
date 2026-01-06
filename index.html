@@ -9,7 +9,6 @@ body {
   background: black;
   color: #16a34a;
   font-family: monospace;
-  margin: 0;
   padding: 20px;
 }
 .panel {
@@ -18,15 +17,17 @@ body {
   max-width: 900px;
 }
 pre {
-  white-space: pre-wrap;
   margin: 0;
+  white-space: pre-wrap;
+}
+.hidden {
+  display: none;
 }
 input, button {
   background: black;
   color: #16a34a;
   border: 1px solid #16a34a;
   font-family: monospace;
-  padding: 4px;
 }
 button { cursor: pointer; }
 </style>
@@ -38,13 +39,10 @@ button { cursor: pointer; }
 <script>
 /* ---------- ROUTING ---------- */
 if (!location.hash) location.hash = '#/home';
-const getPath = () => location.hash.slice(1) || '/home';
-
-/* ---------- BOULDER STATE ---------- */
-let boulderCleared = false;
+const path = () => location.hash.slice(1) || '/home';
 
 /* ---------- LOCATIONS ---------- */
-const locations = {
+const pages = {
 
 "/home": `
 [ HOME ]
@@ -55,7 +53,7 @@ const locations = {
 
 You wake up alone.
 
-A way leads /outside
+A path leads /outside
 `,
 
 "/home/outside": `
@@ -80,8 +78,6 @@ A broken /tractor
 
 "/home/outside/farm/field/tractor": `
 [ TRACTOR ]
-
-A note reads:
 
 "What did the crop say to the other crop?
 Stop being CORNY."
@@ -119,9 +115,9 @@ Too dark to see.
 "/home/outside/cave/flashlight": `
 [ CAVE LIT ]
 
-A /wall
-A /hole
 A narrow /path
+A cracked /wall
+A deep /hole
 `,
 
 "/home/outside/cave/flashlight/path": `
@@ -137,9 +133,8 @@ Scratched into stone:
 "/home/outside/cave/flashlight/path/thewayforward": `
 [ BEYOND ]
 
-The boulder is gone.
-
 A sign reads:
+
 "YOU WERE WARNED"
 
 You may /continue
@@ -151,8 +146,6 @@ You may /continue
  │ ACCESS   │
  └──────────┘
 
-A dusty terminal hums.
-
 > LOGIN REQUIRED
 `,
 
@@ -161,13 +154,11 @@ A dusty terminal hums.
 
 SYSTEM UNLOCKED.
 
-A final door stands ahead.
+A final door waits.
 `,
 
 "/home/outside/cave/flashlight/path/thewayforward/continue/root/end": `
 [ END ]
-
-The system shuts down.
 
 You were never meant to escape —
 only to understand.
@@ -181,13 +172,11 @@ function render() {
   const app = document.getElementById('app');
   app.innerHTML = '';
 
-  const p = getPath();
-  const loc = locations[p];
-
+  const p = path();
   const panel = document.createElement('div');
   panel.className = 'panel';
 
-  if (!loc) {
+  if (!pages[p]) {
     panel.innerHTML = `<pre>
 ┏━━━━━━━━━━━━━━┓
 ┃ WRONG PATH   ┃
@@ -199,39 +188,50 @@ function render() {
     return;
   }
 
-  panel.innerHTML = `<pre>${loc}</pre>`;
+  panel.innerHTML = `<pre>${pages[p]}</pre>`;
 
-  /* BOULDER (INSPECT PUZZLE) */
-  if (p.endsWith('/path') && !boulderCleared) {
+  /* BOULDER PUZZLE */
+  if (p.endsWith('/path')) {
     const rock = document.createElement('pre');
     rock.id = 'boulder';
-    rock.setAttribute('data-solid', 'true'); // ← PLAYER MUST REMOVE THIS
     rock.textContent =
 `████████
 ████████
 ████████`;
+
+    const hidden = document.createElement('pre');
+    hidden.className = 'hidden';
+    hidden.textContent = `
+Behind the boulder, scratched faintly:
+
+/thewayforward
+`;
+
     panel.appendChild(rock);
+    panel.appendChild(hidden);
+
+    /* REVEAL WHEN BOULDER IS DELETED */
+    new MutationObserver(() => {
+      if (!document.getElementById('boulder')) {
+        hidden.classList.remove('hidden');
+      }
+    }).observe(panel, { childList: true });
   }
 
-  if (p.endsWith('/path') && boulderCleared) {
-    panel.innerHTML += `<pre>
-
-The path is clear.
-
-Proceed to /thewayforward
-</pre>`;
-  }
-
-  /* TERMINAL INPUT */
+  /* TERMINAL */
   if (p.endsWith('/continue')) {
     const input = document.createElement('input');
-    input.placeholder = 'username';
-
     const btn = document.createElement('button');
     btn.textContent = 'LOGIN';
 
-    btn.onclick = () => handleTerminal(input.value);
-    input.onkeydown = e => e.key === 'Enter' && handleTerminal(input.value);
+    btn.onclick = () => {
+      const v = input.value.toLowerCase();
+      if (v.includes("'") || v.includes("or 1=1")) {
+        location.hash += '/root';
+      } else {
+        alert('ACCESS DENIED');
+      }
+    };
 
     panel.appendChild(input);
     panel.appendChild(btn);
@@ -240,27 +240,6 @@ Proceed to /thewayforward
   app.appendChild(panel);
 }
 
-/* ---------- BOULDER CHECK (ATTRIBUTE-BASED) ---------- */
-setInterval(() => {
-  const rock = document.getElementById('boulder');
-  if (rock && !rock.hasAttribute('data-solid')) {
-    boulderCleared = true;
-    render();
-  }
-}, 500);
-
-/* ---------- TERMINAL ---------- */
-function handleTerminal(val) {
-  const v = val.toLowerCase();
-  if (v.includes("'") || v.includes("or 1=1")) {
-    location.hash =
-      '#/home/outside/cave/flashlight/path/thewayforward/continue/root';
-  } else {
-    alert('ACCESS DENIED');
-  }
-}
-
-/* ---------- LISTEN ---------- */
 window.addEventListener('hashchange', render);
 render();
 </script>
