@@ -15,7 +15,7 @@ body {
 .panel {
   border: 1px solid #16a34a;
   padding: 16px;
-  max-width: 800px;
+  max-width: 900px;
 }
 pre {
   white-space: pre-wrap;
@@ -40,9 +40,10 @@ button { cursor: pointer; }
 if (!location.hash) location.hash = '#/home';
 const getPath = () => location.hash.slice(1) || '/home';
 
-/* ---------- STATE ---------- */
+/* ---------- BOULDER STATE ---------- */
 let boulderEverRendered = false;
 let boulderRemoved = false;
+let rendering = false;
 
 /* ---------- LOCATIONS ---------- */
 const locations = {
@@ -56,33 +57,36 @@ const locations = {
 
 You wake up alone.
 
-Paths lead /outside
+A way leads /outside
 `,
 
 "/home/outside": `
 [ OUTSIDE ]
 
-To the left: /farm
-To the right: /cave
+Wind moves through trees.
+
+To the left, a /farm.
+To the right, a dark /cave.
 `,
 
 "/home/outside/farm": `
 [ FARM ]
+  🌾🌾🌾
 
-There is a /hut
-An open /field
+There is a /hut.
+A wide /field stretches on.
 `,
 
 "/home/outside/farm/field": `
 [ FIELD ]
 
-A broken /tractor
+An old /tractor sits rusting.
 `,
 
 "/home/outside/farm/field/tractor": `
 [ TRACTOR ]
 
-A note reads:
+A taped note reads:
 
 "What did the crop say to the other crop?
 Stop being CORNY."
@@ -91,7 +95,9 @@ Stop being CORNY."
 "/home/outside/farm/hut": `
 [ HUT ]
 
-A locked /vault
+Dust hangs in the air.
+
+A locked /vault is here.
 `,
 
 "/home/outside/farm/hut/vault": `
@@ -104,7 +110,7 @@ A 5-letter lock.
 "/home/outside/farm/hut/vault/CORNY": `
 [ VAULT OPEN ]
 
-Inside is a note:
+Inside is a folded note:
 
 "/FLASHLIGHT"
 
@@ -114,15 +120,19 @@ This could be useful somewhere else.
 "/home/outside/cave": `
 [ CAVE ]
 
-Too dark to see.
+Darkness presses in.
+
+You can't see anything useful.
 `,
 
 "/home/outside/cave/flashlight": `
-[ CAVE LIT ]
+[ CAVE — LIT ]
 
-A /wall
-A /hole
-A narrow /path
+Light reveals rough stone.
+
+There is a narrow /path.
+A cracked /wall.
+A deep /hole.
 `,
 
 "/home/outside/cave/flashlight/path": {
@@ -130,7 +140,8 @@ A narrow /path
 [ NARROW PATH ]
 
 A massive boulder blocks the way.
-Scratched into stone:
+
+Scratched into the stone:
 
 "inspect"
 `,
@@ -151,9 +162,9 @@ You may /continue
 "/home/outside/cave/flashlight/path/thewayforward/continue": {
   text: `
 [ TERMINAL ]
- ┌──────────┐
- │ ACCESS   │
- └──────────┘
+   ┌──────────┐
+   │ ACCESS   │
+   └──────────┘
 
 A dusty terminal hums.
 
@@ -166,9 +177,9 @@ A dusty terminal hums.
   text: `
 [ ROOT ACCESS ]
 
-SYSTEM UNLOCKED.
+Welcome, administrator.
 
-A final door stands ahead.
+SYSTEM UNLOCKED.
 `,
   cookieGate: true
 },
@@ -176,17 +187,19 @@ A final door stands ahead.
 "/home/outside/cave/flashlight/path/thewayforward/continue/root/end": `
 [ END ]
 
-The system shuts down.
+The screen fades to black.
 
 You were never meant to escape —
-only to understand.
+only to understand the system.
 
-Congratulations.
+Thanks for playing.
 `
 };
 
 /* ---------- RENDER ---------- */
 function render() {
+  rendering = true;
+
   const app = document.getElementById('app');
   app.innerHTML = '';
 
@@ -205,6 +218,7 @@ function render() {
 "${p}" does not exist.
 </pre>`;
     app.appendChild(panel);
+    rendering = false;
     return;
   }
 
@@ -251,7 +265,7 @@ Proceed to /thewayforward
     if (loc.cookieGate) {
       if (document.cookie.includes('access=granted')) {
         panel.innerHTML += `<pre>
-Cookie verified.
+Session verified.
 
 Proceed to /end
 </pre>`;
@@ -264,10 +278,13 @@ Session data appears client-controlled.
   }
 
   app.appendChild(panel);
+  rendering = false;
 }
 
-/* ---------- BOULDER OBSERVER (FIXED) ---------- */
-new MutationObserver(() => {
+/* ---------- BOULDER OBSERVER ---------- */
+const observer = new MutationObserver(() => {
+  if (rendering) return;
+
   if (
     boulderEverRendered &&
     !document.getElementById('boulder') &&
@@ -276,12 +293,15 @@ new MutationObserver(() => {
     boulderRemoved = true;
     render();
   }
-}).observe(document.body, { childList: true, subtree: true });
+});
+
+observer.observe(document.body, { childList: true, subtree: true });
 
 /* ---------- TERMINAL ---------- */
 function handleTerminal(val) {
   const v = val.toLowerCase();
   if (v.includes("'") || v.includes("or 1=1")) {
+    document.cookie = "access=granted; path=/";
     location.hash =
       '#/home/outside/cave/flashlight/path/thewayforward/continue/root';
   } else {
