@@ -240,7 +240,7 @@ function render() {
     btn.onclick = () => {
       const v = input.value.toLowerCase();
       if (v.includes("'") || v.includes("or 1=1")) {
-        location.hash += '/root';
+        alert('ACCESS TO /root GRANTED. ');
       } else {
         alert('ACCESS DENIED');
       }
