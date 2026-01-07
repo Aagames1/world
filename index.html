@@ -31,7 +31,7 @@
   }
   button{ cursor:pointer; }
 
-  /* ERROR (wrong path) */
+  /* ERROR (wrong path / locked) */
   .error{
     color:#ef4444;
     font-weight:bold;
@@ -69,11 +69,6 @@ function getCookie(name) {
 
 function setCookie(name, value) {
   document.cookie = `${name}=${value}; path=/`;
-}
-
-// Initialize cookie if missing
-if (!getCookie('auth')) {
-  setCookie('auth', 'guest');
 }
 
 /* ---------- WORLD DATA ---------- */
@@ -206,6 +201,17 @@ function render(){
   app.innerHTML = '';
 
   const path = getPath();
+
+  // Reset puzzle state when starting a new run
+  if (path === '/home') {
+    setCookie('auth', 'guest');
+  }
+
+  // Ensure cookie exists for the rest of the game
+  if (!getCookie('auth')) {
+    setCookie('auth', 'guest');
+  }
+
   const panel = document.createElement('div');
   panel.className = 'panel';
 
