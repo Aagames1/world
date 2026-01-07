@@ -30,6 +30,18 @@
     margin-top:10px;
   }
   button{ cursor:pointer; }
+
+  /* ERROR (wrong path) */
+  .error{
+    color:#ef4444;
+    font-weight:bold;
+  }
+
+  /* ADMIN SUCCESS */
+  .admin{
+    color:#38bdf8;
+    font-weight:bold;
+  }
 </style>
 </head>
 <body>
@@ -40,7 +52,7 @@
 /*
   ⚠️ NOTE FOR PLAYERS:
   Looking deeper in the source/DevTools to skip ahead isn't the intended experience.
-  The puzzles are meant to be solved step-by-step. Have fun.
+  The puzzles are meant to be solved step-by-step.
 */
 
 /* ---------- ROUTING ---------- */
@@ -56,11 +68,10 @@ function getCookie(name) {
 }
 
 function setCookie(name, value) {
-  // Path=/ makes it available on all routes
   document.cookie = `${name}=${value}; path=/`;
 }
 
-// Initialize puzzle cookie if missing
+// Initialize cookie if missing
 if (!getCookie('auth')) {
   setCookie('auth', 'guest');
 }
@@ -77,8 +88,6 @@ const pages = {
 You wake up alone, unsure why you're here.
 
 A path leads /outside
-
-Navigate the world by editing the url. Try visiting /home/outside
 `,
 
   "/home/outside": `
@@ -109,11 +118,10 @@ A broken /tractor sits in the middle.
   "/home/outside/farm/field/tractor": `
 [ TRACTOR ]
 
-You look around and investigate the tractor. The engine seems to be missing. Inside the tractor, there's a note.
+You look around and investigate the tractor. Inside, there's a note.
+
 "What did the crop say to the other crop?
 Stop being CORNY!"
-
-You're not sure what this could be used for.
 `,
 
   "/home/outside/farm/hut": `
@@ -132,23 +140,19 @@ A 5-letter lock.
   "/home/outside/farm/hut/vault/CORNY": `
 [ VAULT OPEN ]
 
-You unlocked the vault, inside is some medical gear, and a /FLASHLIGHT
-
-This could be useful somewhere else.
+Inside the vault is medical gear and a /FLASHLIGHT.
 `,
 
   "/home/outside/cave": `
 [ CAVE ]
 
 You approach the cave, but it's too dark to see inside.
-
-Might not be a good idea to come here for now.
 `,
 
   "/home/outside/cave/FLASHLIGHT": `
 [ CAVE LIT ]
 
-Using the flashlight, you venture inside the cave. You're not sure why, but it seems to be calling your name.
+Using the flashlight, you venture inside.
 
 A narrow /path awaits.
 `,
@@ -156,10 +160,9 @@ A narrow /path awaits.
   "/home/outside/cave/FLASHLIGHT/path": `
 [ NARROW PATH ]
 
-A massive boulder blocks the way. Attempting to push it leads to no avail.
+A massive boulder blocks the way.
 
-Scratched into stone, you see a single word:
-
+Scratched into stone:
 "inspect"
 `,
 
@@ -168,20 +171,11 @@ Scratched into stone, you see a single word:
 
 The boulder is gone.
 
-A warning sign reads:
-
-"YOU WERE WARNED"
-
 You may /continue
 `,
 
   "/home/outside/cave/FLASHLIGHT/path/thewayforward/continue": `
 [ TERMINAL ]
- ┌──────────┐
- │ ACCESS   │
- └──────────┘
-
-A dusty terminal hums.
 
 > LOGIN REQUIRED
 `,
@@ -197,12 +191,12 @@ SYSTEM UNLOCKED...?
   "/home/outside/cave/FLASHLIGHT/path/thewayforward/continue/root/end": `
 [ END ]
 
-The door opens, the system shuts down.
+The door opens. The system shuts down.
 
 You were never meant to escape —
 only to understand.
 
-Congratulations, for now...
+Congratulations.
 `
 };
 
@@ -215,8 +209,9 @@ function render(){
   const panel = document.createElement('div');
   panel.className = 'panel';
 
+  /* ---------- WRONG PATH ---------- */
   if (!pages[path]) {
-    panel.innerHTML = `<pre>
+    panel.innerHTML = `<pre class="error">
 ┏━━━━━━━━━━━━━━┓
 ┃ WRONG PATH   ┃
 ┗━━━━━━━━━━━━━━┛
@@ -229,7 +224,7 @@ function render(){
 
   panel.innerHTML = `<pre>${pages[path]}</pre>`;
 
-  /* ---------- BOULDER PUZZLE (REVEAL ON DELETE) ---------- */
+  /* ---------- BOULDER PUZZLE ---------- */
   if (path.endsWith('/path')) {
     const boulder = document.createElement('pre');
     boulder.id = 'boulder';
@@ -241,7 +236,6 @@ function render(){
 `;
     panel.appendChild(boulder);
 
-    // Watch for boulder deletion in DevTools.
     const observer = new MutationObserver(() => {
       if (!document.getElementById('boulder')) {
         const reveal = document.createElement('pre');
@@ -249,7 +243,7 @@ function render(){
         reveal.textContent = `
 The stone collapses.
 
-Carved beneath it, you find:
+Carved beneath it:
 
 /thewayforward
 `;
@@ -260,7 +254,7 @@ Carved beneath it, you find:
     observer.observe(panel, { childList: true });
   }
 
-  /* ---------- TERMINAL (SQLi) ---------- */
+  /* ---------- TERMINAL (SQLi PUZZLE) ---------- */
   if (path.endsWith('/continue')) {
     const input = document.createElement('input');
     input.placeholder = 'username';
@@ -270,8 +264,12 @@ Carved beneath it, you find:
 
     function attempt(){
       const v = (input.value || '').toLowerCase();
-      // simple "SQLi-ish" check
-      if (v.includes("'") || v.includes("--") || v.includes("or 1=1") || v.includes("or '1'='1")) {
+      if (
+        v.includes("'") ||
+        v.includes("--") ||
+        v.includes("or 1=1") ||
+        v.includes("or '1'='1")
+      ) {
         alert('ACCESS TO /root GRANTED.');
       } else {
         alert('ACCESS DENIED');
@@ -279,27 +277,27 @@ Carved beneath it, you find:
     }
 
     btn.onclick = attempt;
-    input.onkeydown = (e) => { if (e.key === 'Enter') attempt(); };
+    input.onkeydown = e => { if (e.key === 'Enter') attempt(); };
 
     panel.appendChild(document.createElement('br'));
     panel.appendChild(input);
     panel.appendChild(btn);
   }
 
-  /* ---------- ROOT COOKIE PUZZLE (GATE /end UNTIL COOKIE CHANGED) ---------- */
+  /* ---------- COOKIE PUZZLE ---------- */
   if (path.endsWith('/continue/root')) {
     const auth = getCookie('auth') || '(missing)';
-
     const status = document.createElement('pre');
     status.style.marginTop = '12px';
 
     if (auth === 'admin') {
+      status.className = 'admin';
       status.textContent = `
 ACCESS VERIFIED.
 
-Welcome, administrator.
+WELCOME, ADMINISTRATOR.
 
-A final command is available:
+A FINAL COMMAND IS AVAILABLE:
 
 /end
 `;
@@ -317,21 +315,18 @@ Only administrators may proceed.
     panel.appendChild(status);
   }
 
-  /* ---------- OPTIONAL: BLOCK /end IF COOKIE NOT SET ---------- */
+  /* ---------- BLOCK /end WITHOUT COOKIE ---------- */
   if (path.endsWith('/continue/root/end')) {
     const auth = getCookie('auth') || '';
     if (auth !== 'admin') {
-      panel.innerHTML = `<pre>
+      panel.innerHTML = `<pre class="error">
 ┏━━━━━━━━━━━━━━┓
-┃  LOCKED      ┃
+┃   LOCKED     ┃
 ┗━━━━━━━━━━━━━━┛
 
-You reach for the final door... but it refuses to move.
+Administrator session required.
 
-SYSTEM MESSAGE:
-"Administrator session required."
-
-Try going back to:
+Return to:
 /root
 </pre>`;
     }
