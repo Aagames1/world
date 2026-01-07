@@ -59,7 +59,11 @@
 if (!location.hash) location.hash = '#/home';
 const getPath = () => location.hash.slice(1) || '/home';
 
-/* ---------- COOKIE UTILS ---------- */
+/* ---------- SINGLE COOKIE (ONLY ONE) ---------- */
+const AUTH_COOKIE = 'auth';           // <-- the ONE cookie players should edit
+const AUTH_DEFAULT = 'locked';        // default value at the start
+const AUTH_UNLOCK  = 'admin';         // required value to proceed
+
 function getCookie(name) {
   return document.cookie
     .split('; ')
@@ -202,14 +206,14 @@ function render(){
 
   const path = getPath();
 
-  // Reset puzzle state when starting a new run
+  // Reset puzzle state when starting a new run (sets ONLY the one cookie)
   if (path === '/home') {
-    setCookie('auth', 'guest');
+    setCookie(AUTH_COOKIE, AUTH_DEFAULT);
   }
 
-  // Ensure cookie exists for the rest of the game
-  if (!getCookie('auth')) {
-    setCookie('auth', 'guest');
+  // Ensure the ONE cookie always exists (still only one cookie)
+  if (!getCookie(AUTH_COOKIE)) {
+    setCookie(AUTH_COOKIE, AUTH_DEFAULT);
   }
 
   const panel = document.createElement('div');
@@ -290,13 +294,13 @@ Carved beneath it:
     panel.appendChild(btn);
   }
 
-  /* ---------- COOKIE PUZZLE ---------- */
+  /* ---------- COOKIE PUZZLE (SINGLE COOKIE) ---------- */
   if (path.endsWith('/continue/root')) {
-    const auth = getCookie('auth') || '(missing)';
+    const auth = getCookie(AUTH_COOKIE) || '(missing)';
     const status = document.createElement('pre');
     status.style.marginTop = '12px';
 
-    if (auth === 'admin') {
+    if (auth === AUTH_UNLOCK) {
       status.className = 'admin';
       status.textContent = `
 ACCESS VERIFIED.
@@ -312,7 +316,7 @@ A FINAL COMMAND IS AVAILABLE:
 SYSTEM STATUS: LOCKED
 
 Integrity check failed.
-AUTH_COOKIE = "${auth}"
+${AUTH_COOKIE.toUpperCase()} = "${auth}"
 
 Only administrators may proceed.
 `;
@@ -321,10 +325,10 @@ Only administrators may proceed.
     panel.appendChild(status);
   }
 
-  /* ---------- BLOCK /end WITHOUT COOKIE ---------- */
+  /* ---------- BLOCK /end WITHOUT COOKIE VALUE ---------- */
   if (path.endsWith('/continue/root/end')) {
-    const auth = getCookie('auth') || '';
-    if (auth !== 'admin') {
+    const auth = getCookie(AUTH_COOKIE) || '';
+    if (auth !== AUTH_UNLOCK) {
       panel.innerHTML = `<pre class="error">
 ┏━━━━━━━━━━━━━━┓
 ┃   LOCKED     ┃
