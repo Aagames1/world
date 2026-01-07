@@ -37,9 +37,33 @@
 <div id="app"></div>
 
 <script>
+/*
+  ⚠️ NOTE FOR PLAYERS:
+  Looking deeper in the source/DevTools to skip ahead isn't the intended experience.
+  The puzzles are meant to be solved step-by-step. Have fun.
+*/
+
 /* ---------- ROUTING ---------- */
 if (!location.hash) location.hash = '#/home';
 const getPath = () => location.hash.slice(1) || '/home';
+
+/* ---------- COOKIE UTILS ---------- */
+function getCookie(name) {
+  return document.cookie
+    .split('; ')
+    .find(row => row.startsWith(name + '='))
+    ?.split('=')[1];
+}
+
+function setCookie(name, value) {
+  // Path=/ makes it available on all routes
+  document.cookie = `${name}=${value}; path=/`;
+}
+
+// Initialize puzzle cookie if missing
+if (!getCookie('auth')) {
+  setCookie('auth', 'guest');
+}
 
 /* ---------- WORLD DATA ---------- */
 const pages = {
@@ -165,13 +189,9 @@ A dusty terminal hums.
   "/home/outside/cave/FLASHLIGHT/path/thewayforward/continue/root": `
 [ ROOT ACCESS ]
 
-SYSTEM UNLOCKED.
+SYSTEM UNLOCKED...?
 
-A final door stands ahead.
-
-┌──────────┐
-│    🍪    │
-└──────────┘
+> NOTE: Session data is client-controlled.
 `,
 
   "/home/outside/cave/FLASHLIGHT/path/thewayforward/continue/root/end": `
@@ -264,6 +284,57 @@ Carved beneath it, you find:
     panel.appendChild(document.createElement('br'));
     panel.appendChild(input);
     panel.appendChild(btn);
+  }
+
+  /* ---------- ROOT COOKIE PUZZLE (GATE /end UNTIL COOKIE CHANGED) ---------- */
+  if (path.endsWith('/continue/root')) {
+    const auth = getCookie('auth') || '(missing)';
+
+    const status = document.createElement('pre');
+    status.style.marginTop = '12px';
+
+    if (auth === 'admin') {
+      status.textContent = `
+ACCESS VERIFIED.
+
+Welcome, administrator.
+
+A final command is available:
+
+/end
+`;
+    } else {
+      status.textContent = `
+SYSTEM STATUS: LOCKED
+
+Integrity check failed.
+AUTH_COOKIE = "${auth}"
+
+Only administrators may proceed.
+`;
+    }
+
+    panel.appendChild(status);
+  }
+
+  /* ---------- OPTIONAL: BLOCK /end IF COOKIE NOT SET ---------- */
+  if (path.endsWith('/continue/root/end')) {
+    const auth = getCookie('auth') || '';
+    if (auth !== 'admin') {
+      panel.innerHTML = `<pre>
+┏━━━━━━━━━━━━━━┓
+┃  LOCKED      ┃
+┗━━━━━━━━━━━━━━┛
+
+You reach for the final door... but it refuses to move.
+
+SYSTEM MESSAGE:
+"Administrator session required."
+
+Try going back to:
+/root
+</pre>`;
+    }
   }
 
   app.appendChild(panel);
