@@ -216,7 +216,7 @@ A thin green cursor blinks at the edge of your vision—like the world expects i
 
 Ahead: /outside
 
-<hint>Navigate by editing the URL after <kbd>#</kbd>. Example: <kbd>/home/outside</kbd></hint>
+Navigate by editing the URL after <kbd>#</kbd>. Example: <kbd>/home/outside</kbd>
 `,
 
   "/home/outside": `
@@ -228,28 +228,22 @@ No birds. No engines. Just distant static.
 Left:  /farm
 Right: /cave
 
-<hint>You feel watched, but only by sensors that may not exist.</hint>
 `,
 
   "/home/outside/farm": `
 [ FARM // ABANDONED ROWS ]
 
-Neat lines of crops sway in slow waves, too orderly to be accidental.
-Somewhere nearby, metal creaks with every gust.
+Neat lines of crops sway in the /field, too orderly to be accidental.
+Somewhere nearby, metal creaks with every gust, a small /hut rests.
 
-Forward: /field
-Nearby:  /hut
 
-<hint>The soil is warm. The air is not.</hint>
 `,
 
   "/home/outside/farm/field": `
 [ FIELD // WIND-LIT ]
 
 Stalks brush your arms as you walk. The rustle sounds like whispered packets of data.
-In the center, a broken machine sits as if it gave up mid-task.
-
-Inspect: /tractor
+In the center, a broken /tractor sits.
 `,
 
   "/home/outside/farm/field/tractor": `
@@ -261,16 +255,14 @@ Inside the cab, a note has been pinned with a nail.
 "What did the crop say to the other crop?
 Stop being CORNY!"
 
-<hint>Some doors accept jokes as keys.</hint>
+You're not sure what this could be used for.
 `,
 
   "/home/outside/farm/hut": `
 [ HUT // SINGLE ROOM ]
 
 A small hut, sun-bleached and quiet. The door opens too easily.
-Inside is bare—except for a metal faceplate in the floor.
-
-Down: /vault
+Inside is bare, except for a /vault on the floor.
 `,
 
   "/home/outside/farm/hut/vault": `
@@ -278,32 +270,27 @@ Down: /vault
 
 A keypad glows faintly.
 
-It wants exactly five letters.
+A five-letter lock.
 
-Format:
-  /vault/?????
+/vault/?????
 
-<hint>Return with a word that fits the lock.</hint>
 `,
 
   "/home/outside/farm/hut/vault/CORNY": `
 [ VAULT OPEN // SUPPLIES CACHE ]
 
 The seal clicks. Cold air spills out like a sigh.
-Inside: medical wraps, a cracked mirror, and a flashlight with a steady beam.
+Inside: Medical wraps, a cracked mirror, and a /FLASHLIGHT with a steady beam.
 
-You take the /FLASHLIGHT.
-
-<hint>Dark places aren't impossible—just unprepared.</hint>
+Perhaps this could be useful elsewhere.
 `,
 
   "/home/outside/cave": `
 [ CAVE // BLACK MOUTH ]
 
 A cave entrance yawns open. The darkness inside looks thick, almost physical.
-Without light, it feels like stepping into an error.
+You don't think it's a good idea to enter for now.
 
-<hint>You could force it… but you wouldn’t like what you miss.</hint>
 `,
 
   "/home/outside/cave/FLASHLIGHT": `
@@ -312,19 +299,16 @@ Without light, it feels like stepping into an error.
 The flashlight cuts a clean line through the dark.
 Walls shine with mineral flecks like tiny, dead stars.
 
-A narrow passage waits:
-  /path
+A narrow /path awaits.
 `,
 
   "/home/outside/cave/FLASHLIGHT/path": `
 [ PASSAGE // OBSTRUCTION ]
 
-A boulder blocks the tunnel—too big to move, too deliberate to ignore.
+A boulder blocks the tunnel, too big to move.
 
-Scratched into stone, one word remains:
+Scratched into stone, you only see one word:
 "inspect"
-
-<hint>Sometimes the world only changes when you look at it the right way.</hint>
 `,
 
   "/home/outside/cave/FLASHLIGHT/path/thewayforward": `
@@ -336,8 +320,7 @@ A bent sign dangles from a cable:
 
 "YOU WERE WARNED."
 
-Farther in:
-  /continue
+Will you /continue
 `,
 
   "/home/outside/cave/FLASHLIGHT/path/thewayforward/continue": `
@@ -352,7 +335,7 @@ Its screen flickers, then stabilizes.
 
 > LOGIN REQUIRED
 
-<hint>Some systems trust the *shape* of a mistake.</hint>
+It looks ancient; no use guessing the password.
 `,
 
   "/home/outside/cave/FLASHLIGHT/path/thewayforward/continue/root": `
@@ -361,7 +344,6 @@ Its screen flickers, then stabilizes.
 The terminal unlocks with a sound like a bolt sliding.
 Beyond it, a final door stands in the rock, featureless and patient.
 
-> NOTE: Session data is client-controlled.
 `,
 
   "/home/outside/cave/FLASHLIGHT/path/thewayforward/continue/root/end": `
@@ -376,6 +358,8 @@ A last line prints, calm and final:
 only to understand."
 
 CONNECTION CLOSED.
+
+The end... for now.
 `
 };
 
@@ -437,7 +421,7 @@ function render(){
   if (!pages[path]) {
     content.innerHTML = `<pre class="error">
 ┏━━━━━━━━━━━━━━┓
-┃ WRONG PATH   ┃
+┃ WRONG PATH             ┃
 ┗━━━━━━━━━━━━━━┛
 
 "${path}" does not exist.
@@ -462,10 +446,10 @@ function render(){
     const boulder = document.createElement('pre');
     boulder.id = 'boulder';
     boulder.textContent = `
-████████████████████
-████████████████████
-████████████████████
-████████████████████
+██████████████████
+██████████████████
+██████████████████
+██████████████████
 `;
     content.appendChild(boulder);
 
@@ -476,11 +460,8 @@ function render(){
         reveal.innerHTML = formatText(`
 The stone collapses. Dust settles.
 
-Carved beneath it:
+Beyond, is <kbd>/thewayforward</kbd>
 
-<kbd>/thewayforward</kbd>
-
-<hint>The cave doesn't move—your interface does.</hint>
 `);
         content.appendChild(reveal);
         observer.disconnect();
@@ -496,7 +477,7 @@ Carved beneath it:
     content.appendChild(divider);
 
     const input = document.createElement('input');
-    input.placeholder = 'username';
+    input.placeholder = 'password';
 
     const btn = document.createElement('button');
     btn.textContent = 'LOGIN';
@@ -545,7 +526,7 @@ WELCOME, ADMINISTRATOR.
 
 A FINAL COMMAND IS AVAILABLE:
 
-<kbd>/end</kbd>
+THE <kbd>/end</kbd> AWAITS.
 `);
     } else {
       status.innerHTML = formatText(`
@@ -555,8 +536,6 @@ Integrity check failed.
 AUTH = "${auth}"
 
 Only administrators may proceed.
-
-<hint>Some keys are stored where the browser keeps secrets.</hint>
 `);
     }
 
@@ -569,7 +548,7 @@ Only administrators may proceed.
     if (auth !== AUTH_UNLOCK) {
       content.innerHTML = `<pre class="error">
 ┏━━━━━━━━━━━━━━┓
-┃   LOCKED     ┃
+┃   LOCKED               ┃
 ┗━━━━━━━━━━━━━━┛
 
 Administrator session required.
