@@ -1,253 +1,247 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="UTF-8">
 <title>Puzzle World</title>
+
 <style>
-  :root { --bg:#000; --g:#16a34a; --r:#ff4444; --dim:#9ca3af; --cyan:#06b6d4; }
-  body{ background:var(--bg); color:var(--g); font-family:monospace; padding:20px; margin:0; }
-  .panel{ border:1px solid var(--g); padding:16px; max-width:900px; }
-  .error{ border-color:var(--r); color:var(--r); }
-  pre{ margin:0; white-space:pre-wrap; }
-  .hint{ color:var(--dim); font-size:12px; margin-top:10px; white-space:pre-wrap; }
-  input,button{ background:#000; color:var(--g); border:1px solid var(--g); font-family:monospace; padding:4px 8px; margin-top:10px; }
+  body{
+    background:#000;
+    color:#16a34a;
+    font-family: monospace;
+    padding:20px;
+    margin:0;
+  }
+  .panel{
+    border:1px solid #16a34a;
+    padding:16px;
+    max-width:900px;
+  }
+  pre{
+    margin:0;
+    white-space:pre-wrap;
+  }
+  input,button{
+    background:#000;
+    color:#16a34a;
+    border:1px solid #16a34a;
+    font-family: monospace;
+    padding:4px 8px;
+    margin-top:10px;
+  }
   button{ cursor:pointer; }
-  .title{ color:var(--cyan); margin-bottom:8px; }
-  .spacer{ height:10px; }
 </style>
 </head>
 <body>
+
 <div id="app"></div>
 
 <script>
-/* =========================
-   ROUTING
-   ========================= */
-const DEFAULT_ROOM = 'r01';
-if (!location.hash) location.hash = '#/' + DEFAULT_ROOM;
+/* ---------- ROUTING ---------- */
+if (!location.hash) location.hash = '#/home';
+const getPath = () => location.hash.slice(1) || '/home';
 
-function routeRaw(){
-  const h = location.hash || '';
-  const cleaned = h.startsWith('#/') ? h.slice(2) : h.startsWith('#') ? h.slice(1) : h;
-  return (cleaned || DEFAULT_ROOM).trim();
-}
-function go(id){ location.hash = '#/' + id; }
+/* ---------- WORLD DATA ---------- */
+const pages = {
+  "/home": `
+[ HOME ]
+ _______
+|       |
+|  BED  |
+|_______|
 
-/* =========================
-   BASE64 HELPERS
-   ========================= */
-function b64Decode(s){
-  // supports unicode safely
-  try{
-    return decodeURIComponent(escape(atob(s)));
-  }catch(e){
-    // fallback if already plain (dev)
-    return s;
-  }
-}
+You wake up alone, unsure why you're here.
 
-/* =========================
-   SPOILER-RESISTANT CONTENT
-   - store text/art as base64 strings
-   ========================= */
-const R = {
-  r01: {
-    title: "SEVNRQ==", // "HOME"
-    art:  "IF9fX19fXwpfICAgICAgIHwKfCAgQkVEICB8CnxfX19fX198Cg==",
-    text: "WW91IHdha2UgdXAgYWxvbmUsIHVuc3VyZSB3aHkgeW91J3JlIGhlcmUuCgpBIHBhdGggbGVhZHMgb3V0d2FyZC4KCkhlcmUncyBhIHdheSB0byBnbyAvb3V0c2lkZS4KClRyeTogIy9yMDIK"
-  },
-  r02: {
-    title:"T1VUU0lERQ==",
-    art:"ICAg4piBIGICAgICAg4piBCvCfjLIgICBfX19fXyAgIPCfjLIKICAgIC8gICAgIFwK",
-    text:"WW91IGdvIG91dHNpZGUsIGJ1dCB0aGVyZSdzIG5vIHNpZ24gb2YgbGlmZSBhbnl3aGVyZS4KCkxlZnQsIGEgZmFybS4gUmlnaHQsIGEgY2F2ZS4KCgpUcnk6CiAgIy9yMDMgIChmYXJtKQogICMvciA5ICAoY2F2ZSkK".replace("Iy9yIDk","Iy9yMDk") // keep source less readable
-  },
-  r03: {
-    title:"RkFSTQ==",
-    art:"ICAg8J+MqfCfjK3wn4yp8J+MqfCfjK0KICDwn4ypICDwn5aUIO+/vSDwn4ypCiAgIPCfjK3wn4yp8J+MqfCfjK3wn4ypCiAgICAgX19fXyAKICAgIHxIVVQgfAo=",
-    text:"WW91IGJyZWF0aGUgaW4gdGhlIGZhcm0gYWlyLgoKVGhlcmUncyBhbiBvcGVuIGZpZWxkLCBhbmQgYSBzbWFsbCBodXQuCgpUcnk6CiAgIy9yMDQgKGZpZWxkKQogICMvciA2IChodXQpCiAgIy9yMDIgKGJhY2spCg==".replace("Iy9yIDY","Iy9yMDY")
-  },
-  r04: {
-    title:"RklFTEQ=",
-    art:"8J+MmfCfjJrwn4yZ8J+MmfCfjJrwn4yZC/CfjJrwn4yZICDwn5aUICDwn4ya8J+MmfCfjJrwn4yZC/CfjJrwn4yZ8J+MmfCfjJrwn4yZCg==",
-    text:"WW91IHdhbGsgdGhyb3VnaCB0aGUgY3JvcHMuCgpBIGJyb2tlbiAvdHJhY3RvciBzaXRzIGluIHRoZSBtaWRkbGUuCgpUcnk6CiAgIy9yMDUgKHRyYWN0b3IpCiAgIy9yMDMgKGJhY2spCg=="
-  },
-  r05: {
-    title:"VFJBQ1RPUg==",
-    art:"ICAgX19fX18KIF8vX19fX18vXAopfCAgXyBfICAgfAoncChtbyktKG8pLQo=",
-    text:"WW91IGludmVzdGlnYXRlIHRoZSB0cmFjdG9yLiBUaGUgZW5naW5lIGlzIG1pc3NpbmcuCgpJbnNpZGUsIGEgbm90ZToKClwiV2hhdCBkaWQgdGhlIGNyb3Agc2F5IHRvIHRoZSBvdGhlciBjcm9wPwpTdG9wIGJlaW5nIENPUk5ZIVwiCg=="
-  },
-  r06: {
-    title:"SFVUA==",
-    art:"ICAgX19fX18KICAvX19fX1wKICB8ICAgICB8CiAgfF9fX19ffAo=",
-    text:"VGhlIGh1dCBpcyBlbXB0eSwgZXhjZXB0IGZvciBhIGxvY2tlZCAvdmF1bHQuCgpUcnk6CiAgIy9yMDcgKHZhdWx0KQogICMvciAwMyAoYmFjaykK".replace("Iy9yIDA z","Iy9yMDM").replace("Iy9yMDcg","Iy9yMDc ")
-  },
-  r07: {
-    title:"VkFVTFQ=",
-    art:"ICDilogICAgICAgC iBfX18gICAKICDilogfF9fX3wgfAogICDilohcX19fXy8gCg==".replace(/ /g,''),
-    text:"QSA1LWxldHRlciBsb2NrLgoKVGhlIGxvY2sgd2FudHMgYSBjb2RlLg==",
-    puzzle:"vault"
-  },
-  r08: {
-    title:"VkFVTFQgT1BFTg==",
-    art:"ICDilogIG9wZW4g4paO4paO4paOIAogICDilohf4paR4paR4paR4paR4paR4paR4paR4paR4paR4paR4paR4paR4paR4paR4paR4paR4paR4paR4paR4paRICAK".replace(/\s+/g,' '),
-    text:"VGhlIGxvY2sgY2xpY2tzLgoKSW5zaWRlIGlzIGEgc21hbGwgbm90ZToKCgovRkxBU0hMSUdIVAoKRkxBU0hMSUdIVCBvYnRhaW5lZC4gVGhpcyBjb3VsZCBiZSB1c2VmdWwgc29tZXdoZXJlIGVsc2UuCg=="
-  },
-  r09: {
-    title:"Q0FWRQ==",
-    art:"ICAg4paI4paI4paI4paI4paICiAg4paIICAgICAg4paICiAg4paIICAg4paRICAg4paICiAg4paI4paR4paR4paR4paR4paIK",
-    text:"SXQncyB0b28gZGFyayB0byBzZWUgaW5zaWRlLgoKTWlnaHQgbm90IGJlIGEgZ29vZCBpZGVhIGZvciBub3cuCgpJZiB5b3UgZXZlciBmaW5kIGEgd29yZCB0aGF0IGZlZWxzIGxpa2UgaXQgYmVsb25ncyBoZXJlLCB0cnkgdHlwaW5nIGl0IGFzIHRoZSByb3V0ZS4K"
-  },
-  r10: {
-    title:"Q0FWRSBMSVQ=",
-    art:"ICAg4paIICDwn5aUICDwn5aUIOKWiAogIOKWiCAgICAgICDiloggCiAg4paI4paR4paR4paR4paR4paIK",
-    text:"VXNpbmcgYSBsaWdodCwgeW91IHZlbnR1cmUgaW4uCgpBIG5hcnJvdyAvcGF0aCBhd2FpdHMuCgpUcnk6CiAgIy9yMTEK",
-    // This is a “key room” reachable by typing #/FLASHLIGHT without storing inventory.
-    alias:"FLASHLIGHT"
-  },
-  r11: {
-    title:"TkFSUk9XIFBBVEg=",
-    art:"ICAg4paI4paI4paI4paI4paI4paIKOKbrOKWiOKWiOKWiOKWiOKWiAogIOKWiCAgICAgICAgICDiloggCiAg4paIICAg4paT4paT4paT4paTICAg4paICiAg4paI4paR4paR4paR4paR4paR4paIK",
-    text:"QSBtYXNzaXZlIGJvdWxkZXIgYmxvY2tzIHRoZSB3YXkuCgpTY3JhdGNoZWQgaW50byBzdG9uZToKCiJpbnNwZWN0Igo=",
-    puzzle:"boulder"
-  },
-  r12: {
-    title:"QkVZT05E",
-    art:"ICAg4paIICAg4paICiAg4paIICDinKgg4paICiAg4paI4paR4paR4paR4paR4paIK",
-    text:"VGhlIGJvdWxkZXIgaXMgZ29uZS4KCkEgd2FybmluZyBzaWduIHJlYWRzOgoKIllPVSBXRVJFIFdBUk5FRCIKCllvdSBtYXkgL2NvbnRpbnVlLgoKVHJ5OiAjL3IxMwo="
-  },
-  r13: {
-    title:"VEVSTUlOQUw=",
-    art:"IOKUrOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUkAogIOKUiOKUgCBBQ0NFU1MgIOKUiAogIOKUlOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUnA==",
-    text:"QSBkdXN0eSB0ZXJtaW5hbCBodW1zLgoKPiBMT0dJTiBSRVFVSVJFRAo=",
-    puzzle:"terminal"
-  },
-  r14: {
-    title:"Uk9PVCBBQ0NFU1M=",
-    art:"4pSC4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSCCuKUgiAgICDwn42qICAgCuKUkOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUnA==",
-    text:"U1lTVEVNIFVOTE9DS0VELgoKQSBmaW5hbCBkb29yIHN0YW5kcyBhYWhlYWQuCgpBIHBsYXF1ZSByZWFkczoKIlByb29mIG9mIGFjY2VzcyBpcyBjYXJyaWVkIGJ5IHRoZSBjbGllbnQuIgo=",
-    puzzle:"cookie"
-  },
-  r15: {
-    title:"RU5E",
-    art:"ICBfX19fX19fX18KIC8gIF9fX18gIFwKfCAgfCAgRU5EIHwgIHwKfCAgfF9fX19ffCAgfAp8X198X19fX19ffF9ffAo=",
-    text:"VGhlIGRvb3Igb3BlbnMuIFRoZSBzeXN0ZW0gc2h1dHMgZG93bi4KCllvdSB3ZXJlIG5ldmVyIG1lYW50IHRvIGVzY2FwZSDigJQKb25seSB0byB1bmRlcnN0YW5kLgoKQ29uZ3JhdHVsYXRpb25zLCBmb3Igbm93LiAK"
-  }
+A path leads /outside
+
+Navigate the world by editing the url. Try visiting /home/outside
+`,
+
+  "/home/outside": `
+[ OUTSIDE ]
+
+You go outside, but there's no sign of life anywhere.
+
+To your left, a deserted /farm
+To your right, a looming /cave
+`,
+
+  "/home/outside/farm": `
+[ FARM ]
+
+You breath in the fresh air in the farm.
+
+An open /field full of crops awaits.
+You also notice a small /hut nearby.
+`,
+
+  "/home/outside/farm/field": `
+[ FIELD ]
+
+You walk through the crops, still flowing through the winds.
+A broken /tractor sits in the middle.
+`,
+
+  "/home/outside/farm/field/tractor": `
+[ TRACTOR ]
+
+You look around and investigate the tractor. The engine seems to be missing. Inside the tractor, there's a note.
+"What did the crop say to the other crop?
+Stop being CORNY!"
+
+You're not sure what this could be used for.
+`,
+
+  "/home/outside/farm/hut": `
+[ HUT ]
+
+There's nothing inside, except for a locked /vault
+`,
+
+  "/home/outside/farm/hut/vault": `
+[ VAULT ]
+
+A 5-letter lock.
+/vault/?????
+`,
+
+  "/home/outside/farm/hut/vault/CORNY": `
+[ VAULT OPEN ]
+
+You unlocked the vault, inside is some medical gear, and a /FLASHLIGHT
+
+This could be useful somewhere else.
+`,
+
+  "/home/outside/cave": `
+[ CAVE ]
+
+You approach the cave, but it's too dark to see inside.
+
+Might not be a good idea to come here for now.
+`,
+
+  "/home/outside/cave/FLASHLIGHT": `
+[ CAVE LIT ]
+
+Using the flashlight, you venture inside the cave. You're not sure why, but it seems to be calling your name.
+
+A narrow /path awaits.
+`,
+
+  "/home/outside/cave/FLASHLIGHT/path": `
+[ NARROW PATH ]
+
+A massive boulder blocks the way. Attempting to push it leads to no avail.
+
+Scratched into stone, you see a single word:
+
+"inspect"
+`,
+
+  "/home/outside/cave/FLASHLIGHT/path/thewayforward": `
+[ BEYOND ]
+
+The boulder is gone.
+
+A warning sign reads:
+
+"YOU WERE WARNED"
+
+You may /continue
+`,
+
+  "/home/outside/cave/FLASHLIGHT/path/thewayforward/continue": `
+[ TERMINAL ]
+ ┌──────────┐
+ │ ACCESS   │
+ └──────────┘
+
+A dusty terminal hums.
+
+> LOGIN REQUIRED
+`,
+
+  "/home/outside/cave/FLASHLIGHT/path/thewayforward/continue/root": `
+[ ROOT ACCESS ]
+
+SYSTEM UNLOCKED.
+
+A final door stands ahead.
+
+┌──────────┐
+│    🍪    │
+└──────────┘
+`,
+
+  "/home/outside/cave/FLASHLIGHT/path/thewayforward/continue/root/end": `
+[ END ]
+
+The door opens, the system shuts down.
+
+You were never meant to escape —
+only to understand.
+
+Congratulations, for now...
+`
 };
 
-// Alias routing (without exposing story paths)
-const ALIASES = {};
-for (const id of Object.keys(R)){
-  if (R[id].alias) ALIASES[R[id].alias.toUpperCase()] = id;
-}
-
-/* =========================
-   PUZZLE GATES (anti-skip)
-   - No flashlight variable.
-   - Skipping to rooms is possible, but they won't advance without actions.
-   ========================= */
+/* ---------- RENDER ---------- */
 function render(){
   const app = document.getElementById('app');
   app.innerHTML = '';
 
-  const raw = routeRaw();
-  const norm = (ALIASES[raw.toUpperCase()] ? ALIASES[raw.toUpperCase()] : raw);
-  const room = R[norm];
-
+  const path = getPath();
   const panel = document.createElement('div');
   panel.className = 'panel';
 
-  if (!room){
-    panel.classList.add('error');
-    panel.innerHTML = `<pre>┏━━━━━━━━━━━━━━┓
-┃ WRONG ROOM   ┃
+  if (!pages[path]) {
+    panel.innerHTML = `<pre>
+┏━━━━━━━━━━━━━━┓
+┃ WRONG PATH   ┃
 ┗━━━━━━━━━━━━━━┛
 
-"${raw}" does not exist.
-
-Try: #/${DEFAULT_ROOM}
+"${path}" does not exist.
 </pre>`;
     app.appendChild(panel);
     return;
   }
 
-  const title = document.createElement('div');
-  title.className = 'title';
-  title.textContent = `> ${b64Decode(room.title)} (room: ${norm})`;
-  panel.appendChild(title);
+  panel.innerHTML = `<pre>${pages[path]}</pre>`;
 
-  const pre = document.createElement('pre');
-  pre.textContent = `${b64Decode(room.art || '')}\n${b64Decode(room.text || '')}`.trimEnd();
-  panel.appendChild(pre);
-
-  /* ---- VAULT ---- */
-  if (room.puzzle === 'vault'){
-    panel.appendChild(document.createElement('div')).className = 'spacer';
-
-    const input = document.createElement('input');
-    input.placeholder = '5-letter code';
-    input.maxLength = 5;
-
-    const btn = document.createElement('button');
-    btn.textContent = 'UNLOCK';
-
-    function attempt(){
-      const v = (input.value || '').trim().toUpperCase();
-      if (v === 'CORNY') go('r08');
-      else alert('Wrong code.');
-    }
-    btn.onclick = attempt;
-    input.onkeydown = (e)=>{ if (e.key === 'Enter') attempt(); };
-
-    panel.appendChild(input);
-    panel.appendChild(btn);
-  }
-
-  /* ---- BOULDER (Inspect Element) ----
-     Reveal is created ONLY AFTER boulder is deleted.
-     The answer is a ROOM ID, not a readable path.
-  */
-  if (room.puzzle === 'boulder'){
-    panel.appendChild(document.createElement('div')).className = 'spacer';
-
-    const b = document.createElement('pre');
-    b.id = 'boulder';
-    b.textContent =
-`████████████████████
+  /* ---------- BOULDER PUZZLE (REVEAL ON DELETE) ---------- */
+  if (path.endsWith('/path')) {
+    const boulder = document.createElement('pre');
+    boulder.id = 'boulder';
+    boulder.textContent = `
 ████████████████████
 ████████████████████
-████████████████████`;
-    panel.appendChild(b);
+████████████████████
+████████████████████
+`;
+    panel.appendChild(boulder);
 
-    const hint = document.createElement('div');
-    hint.className = 'hint';
-    hint.textContent = `Puzzle: Inspect Element (F12) → delete the element with id="boulder".`;
-    panel.appendChild(hint);
-
-    const obs = new MutationObserver(() => {
+    // Watch for boulder deletion in DevTools.
+    const observer = new MutationObserver(() => {
       if (!document.getElementById('boulder')) {
         const reveal = document.createElement('pre');
         reveal.style.marginTop = '12px';
-        reveal.textContent =
-`The stone collapses.
+        reveal.textContent = `
+The stone collapses.
 
 Carved beneath it, you find:
 
-r12`;
+/thewayforward
+`;
         panel.appendChild(reveal);
-        obs.disconnect();
+        observer.disconnect();
       }
     });
-    obs.observe(panel, { childList:true, subtree:true });
+    observer.observe(panel, { childList: true });
   }
 
-  /* ---- TERMINAL (SQLi-ish) ----
-     Even if they skip to r13, they still have to pass this input
-     to learn/advance to r14.
-  */
-  if (room.puzzle === 'terminal'){
-    panel.appendChild(document.createElement('div')).className = 'spacer';
-
+  /* ---------- TERMINAL (SQLi) ---------- */
+  if (path.endsWith('/continue')) {
     const input = document.createElement('input');
     input.placeholder = 'username';
 
@@ -256,67 +250,21 @@ r12`;
 
     function attempt(){
       const v = (input.value || '').toLowerCase();
+      // simple "SQLi-ish" check
       if (v.includes("'") || v.includes("--") || v.includes("or 1=1") || v.includes("or '1'='1")) {
-        alert('ACCESS GRANTED. Proceed to room r14.');
-        go('r14');
+        alert('ACCESS TO /root GRANTED.');
       } else {
         alert('ACCESS DENIED');
       }
     }
-    btn.onclick = attempt;
-    input.onkeydown = (e)=>{ if (e.key === 'Enter') attempt(); };
 
+    btn.onclick = attempt;
+    input.onkeydown = (e) => { if (e.key === 'Enter') attempt(); };
+
+    panel.appendChild(document.createElement('br'));
     panel.appendChild(input);
     panel.appendChild(btn);
-
-    const hint = document.createElement('div');
-    hint.className = 'hint';
-    hint.textContent = `Hint: Some inputs can “break” careless checks.`;
-    panel.appendChild(hint);
   }
-
-  /* ---- COOKIE GATE ----
-     Skipping to r14 is allowed, but you can't reach r15 without the cookie.
-  */
-  if (room.puzzle === 'cookie'){
-    panel.appendChild(document.createElement('div')).className = 'spacer';
-
-    const ok = document.cookie.split(';').map(s=>s.trim()).some(s => s === 'access=granted');
-
-    if (ok){
-      const msg = document.createElement('pre');
-      msg.textContent = `Cookie verified.\n\nProceed to room r15.`;
-      panel.appendChild(msg);
-
-      const btn = document.createElement('button');
-      btn.textContent = 'ENTER';
-      btn.onclick = ()=>go('r15');
-      panel.appendChild(btn);
-    } else {
-      const msg = document.createElement('pre');
-      msg.textContent = `ACCESS DENIED\n\nSession data appears client-controlled.`;
-      panel.appendChild(msg);
-
-      const clue = document.createElement('div');
-      clue.className = 'hint';
-      clue.textContent =
-`Clue:
-Set a cookie exactly like:
-access=granted
-
-DevTools → Application/Storage → Cookies
-or Console:
-document.cookie = "access=granted;path=/"
-`;
-      panel.appendChild(clue);
-    }
-  }
-
-  /* ---- Extra anti-spoiler hint ---- */
-  const footer = document.createElement('div');
-  footer.className = 'hint';
-  footer.textContent = `Navigation: edit the URL hash to a room id (e.g. #/r02).\nTip: some keywords can work too (example: #/FLASHLIGHT).`;
-  panel.appendChild(footer);
 
   app.appendChild(panel);
 }
@@ -324,5 +272,6 @@ document.cookie = "access=granted;path=/"
 window.addEventListener('hashchange', render);
 render();
 </script>
+
 </body>
 </html>
