@@ -204,6 +204,14 @@ function setCookie(name, value) {
   document.cookie = `${name}=${value}; path=/`;
 }
 
+  /*
+  ⚠️ DO NOT CONTINUE READING ⚠️
+  Looking deeper into the source code to skip ahead isn't the intended experience.
+  If I had more time, I would've obfuscated the code or set up an actual server so you can't "cheat",
+  but for now, don't look into this code further.
+  Feel free to explore any other content in Inspect Element.
+*/
+
 /* ---------- WORLD DATA (RICHER TEXT) ---------- */
 const pages = {
   "/home": `
@@ -421,7 +429,7 @@ function render(){
   if (!pages[path]) {
     content.innerHTML = `<pre class="error">
 ┏━━━━━━━━━━━━━━┓
-┃ WRONG PATH             ┃
+┃ WRONG PATH   ┃
 ┗━━━━━━━━━━━━━━┛
 
 "${path}" does not exist.
@@ -524,8 +532,6 @@ ACCESS VERIFIED.
 
 WELCOME, ADMINISTRATOR.
 
-A FINAL COMMAND IS AVAILABLE:
-
 THE <kbd>/end</kbd> AWAITS.
 `);
     } else {
@@ -535,7 +541,7 @@ SYSTEM STATUS: LOCKED
 Integrity check failed.
 AUTH = "${auth}"
 
-Only administrators may proceed.
+Only the admin may proceed.
 `);
     }
 
@@ -548,7 +554,7 @@ Only administrators may proceed.
     if (auth !== AUTH_UNLOCK) {
       content.innerHTML = `<pre class="error">
 ┏━━━━━━━━━━━━━━┓
-┃   LOCKED               ┃
+┃   LOCKED     ┃
 ┗━━━━━━━━━━━━━━┛
 
 Administrator session required.
