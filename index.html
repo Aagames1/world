@@ -190,8 +190,8 @@ if (!location.hash) location.hash = '#/home';
 const getPath = () => location.hash.slice(1) || '/home';
 
 /* ---------- SINGLE COOKIE (ONLY ONE) ---------- */
-const AUTH_COOKIE = 'auth';     // the ONE cookie players should edit
-const AUTH_DEFAULT = 'locked';  // default at the start
+const AUTH_COOKIE = 'user';     // the ONE cookie players should edit
+const AUTH_DEFAULT = 'guest';  // default at the start
 const AUTH_UNLOCK  = 'admin';   // required to proceed
 
 function getCookie(name) {
@@ -539,7 +539,7 @@ THE <kbd>/end</kbd> AWAITS.
 SYSTEM STATUS: LOCKED
 
 Integrity check failed.
-AUTH = "${auth}"
+user = "${auth}"
 
 Only the admin may proceed.
 `);
