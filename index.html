@@ -190,9 +190,6 @@ if (!location.hash) location.hash = '#/home';
 const getPath = () => location.hash.slice(1) || '/home';
 
 /* ---------- SINGLE COOKIE (ONLY ONE) ---------- */
-const AUTH_COOKIE = 'user';     // the ONE cookie players should edit
-const AUTH_DEFAULT = 'guest';  // default at the start
-const AUTH_UNLOCK  = 'admin';   // required to proceed
 
 function getCookie(name) {
   return document.cookie
@@ -212,7 +209,7 @@ function setCookie(name, value) {
   Feel free to explore any other content in Inspect Element.
 */
 
-/* ---------- WORLD DATA (RICHER TEXT) ---------- */
+/* ---------- WORLD DATA  ---------- */
 const pages = {
   "/home": `
 [ HOME NODE // DORMANT ]
@@ -370,6 +367,10 @@ CONNECTION CLOSED.
 The end... for now.
 `
 };
+  
+const AUTH_COOKIE = 'user';     // the ONE cookie players should edit
+const AUTH_DEFAULT = 'guest';  // default at the start
+const AUTH_UNLOCK  = 'admin';   // required to proceed
 
 /* ---------- HELPERS: render prettified text ---------- */
 function formatText(raw){
